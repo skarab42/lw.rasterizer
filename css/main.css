@@ -1,0 +1,135 @@
+* {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    font-weight: 400;
+    line-height: 1.2em;
+    vertical-align: middle;
+    box-sizing: border-box;
+    font-family: "Lato","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    color: #ffffff;
+    background-color: #222222;
+}
+
+pre, code {
+    font-family: monospace;
+}
+
+.control, .info {
+    color: #00bc8c;
+    cursor: pointer;
+    padding: 5px 10px;
+    position: relative;
+    border-radius: 4px;
+    margin: 5px 0 0 5px;
+    display: inline-block;
+    border: 1px solid #464545;
+}
+
+.control input {
+    color: #ffffff;
+    text-align: center;;
+    background-color: transparent;
+}
+
+.button {
+    color: #ffffff;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    display: inline-block;
+    border-color: #00bc8c;
+    background-color: #00bc8c;
+}
+
+.button:hover {
+    border-color: #464545;
+    background-color: #303030;
+}
+
+.button input[type=file] {
+    top: 0;
+    right: 0;
+    position: absolute;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: #fff;
+    cursor: inherit;
+    display: block;
+}
+
+#header {
+    padding: 15px;
+    overflow: auto;
+    vertical-align: bottom;
+    border-bottom: 1px solid #464545;
+}
+
+#header h1 {
+    font-size: 1.6em;
+    display: inline-block;
+}
+
+#header .control {
+    vertical-align: bottom;
+}
+
+#header .control input {
+    max-width: 60px;
+}
+
+#content {
+    padding: 15px;
+}
+
+#fileInfo .info {
+    cursor: auto;
+    padding: 2px 5px;
+    font-size: 0.8em;
+}
+
+#fileInfo .info span {
+    color: #fff;
+}
+
+#fileInfo .weightUnit {
+    color: #00bc8c;
+}
+
+#canvasWrapper {
+    padding: 15px 5px;
+}
+
+#gCodeWrapper {
+    position: fixed;
+    display: none;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 15px;
+    overflow: auto;
+    background: #111;
+}
+
+#gCodeText {
+    display: block;
+    padding: 15px;
+    background: #222;
+    border-radius: 8px;
+    border: 1px solid #464545;
+}
+
+#downloadButton, #showButton {
+    display: none;
+}
