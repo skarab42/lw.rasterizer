@@ -25,6 +25,7 @@ var Rasterizer = function(settings) {
         feedRate : 1500,               // Feed rate in mm/min (F value)
         trimLine : true,               // Trim trailing white pixels
         joinPixel: false,              // Join consecutive pixels with same intensity
+        burnWhite: true,               // [true = G1 S0 | false = G0] on inner white pixels
         accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
         onError  : null,
         onFile   : null,

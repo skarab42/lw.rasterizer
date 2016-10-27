@@ -109,8 +109,14 @@ function rasterize() {
             catch (e) { /* End of line */ }
         }
 
-        // Go to start of the line
-        text.push('G1 X' + X.toFixed(2) + ' S' + S.toFixed(4));
+        if (! settings.burnWhite && S === 0) {
+            // Move to pixel
+            text.push('G0 X' + X.toFixed(2));
+        }
+        else {
+            // Burn pixel
+            text.push('G1 X' + X.toFixed(2) + ' S' + S.toFixed(4));
+        }
     }
 
     // For each image line
