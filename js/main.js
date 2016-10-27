@@ -50,7 +50,7 @@ function storeSettings() {
 function onError(message) {
     alert(message);
     console.error('onError:', message);
-    rasterizeButton.style.display = 'inline-block';
+    rasterizeButton.style.display = 'block';
 }
 
 function onFile(file) {
@@ -63,10 +63,12 @@ function onFile(file) {
 
 function onImage(image) {
     //console.info('onImage:', image);
-    rasterizeButton.style.display = 'inline-block';
+    rasterizeButton.style.display = 'block';
     fileInfo.style.display        = 'block';
     noFile.style.display          = 'none';
     jobProgress.style.display     = 'none';
+    downloadButton.style.display  = 'none';
+    showButton.style.display      = 'none';
     imageWidth.innerHTML          = image.width;
     imageHeight.innerHTML         = image.height;
     imageRealWidth.innerHTML      = (this.imageSize.width * this.settings.beamSize).toFixed(2);
@@ -75,7 +77,7 @@ function onImage(image) {
 
 function onCanvas(canvas) {
     //console.info('onCanvas:', canvas);
-    canvasWrapper.style.width = (rasterizer.imageSize.width + 30) + 'px';
+    canvasWrapper.style.width = rasterizer.imageSize.width + 'px';
 
     while(canvasWrapper.firstChild){
         canvasWrapper.removeChild(canvasWrapper.firstChild);
@@ -106,7 +108,7 @@ function onDone() {
     //console.info('onDone');
     jobPercent.innerHTML          = 100;
     jobTime.innerHTML             = (this.time / 1000).toFixed(2);
-    rasterizeButton.style.display = 'inline-block';
+    rasterizeButton.style.display = 'block';
     downloadButton.style.display  = 'inline-block';
     showButton.style.display      = 'inline-block';
     jobDone.style.display         = 'inline-block';
@@ -163,6 +165,10 @@ fileInput.accept              = rasterizer.settings.accept.join(', ');
 fileInput.title               = fileInput.accept;
 fileInfo.style.display        = 'none';
 rasterizeButton.style.display = 'none';
+downloadButton.style.display  = 'none';
+showButton.style.display      = 'none';
+gCodeWrapper.style.display    = 'none';
+jobDone.style.display         = 'none';
 
 // UI callbacks
 function refreshSettings() {
