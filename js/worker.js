@@ -97,6 +97,11 @@ function rasterize() {
         // Get non white pixels range
         if (settings.trimLine) {
             range = getPixelsRange(y, width);
+
+            // Skip empty line
+            if (! range.length) {
+                continue;
+            }
         }
         else {
             range = { start: 0, end: width, length: width };
