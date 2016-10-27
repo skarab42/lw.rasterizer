@@ -60,7 +60,7 @@ var Rasterizer = function(settings) {
             // Trigger "onGCode" callback
             if (typeof self.settings.onGCode === 'function') {
                 var p = Math.round((message.data.line / self.imageSize.height) * 100);
-                self.settings.onGCode.call(self, message.data, p);
+                self.settings.onGCode.call(self, message.data, 100 - p);
             }
         }
     }
