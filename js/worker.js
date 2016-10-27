@@ -86,6 +86,17 @@ function rasterize() {
     var height  = settings.imageSize.height - 1;
     var reverse = true;
 
+    function moveTo(x) {
+        // Set first pixel position
+        X  = (x * beam) + offset;
+
+        // Get pixel power
+        S = getPixelPower(x, y);
+
+        // Go to start of the line
+        text.push('G1 X' + X.toFixed(2) + ' S' + S.toFixed(4));
+    }
+
     // For each image line
     for (y = height; y >= 0; y--) {
         // Reset gcode text
@@ -124,26 +135,12 @@ function rasterize() {
         // For each pixel on the range
         if (reverse) {
             for (x = range.end; x >= range.start; x--) {
-                // Set first pixel position
-                X  = (x * beam) + offset;
-
-                // Get pixel power
-                S = getPixelPower(x, y);
-
-                // Go to start of the line
-                text.push('G1 X' + X.toFixed(2) + ' S' + S.toFixed(4));
+                moveTo(x);
             }
         }
         else {
             for (x = range.start; x <= range.end; x++) {
-                // Set first pixel position
-                X  = (x * beam) + offset;
-
-                // Get pixel power
-                S = getPixelPower(x, y);
-
-                // Go to start of the line
-                text.push('G1 X' + X.toFixed(2) + ' S' + S.toFixed(4));
+                moveTo(x);
             }
         }
 
