@@ -73,7 +73,7 @@ function onImage(image) {
 
 function onCanvas(canvas) {
     //console.info('onCanvas:', canvas);
-    canvasWrapper.style.width = rasterizer.imageSize.width + 'px';
+    canvasWrapper.style.width = (rasterizer.imageSize.width + 30) + 'px';
 
     while(canvasWrapper.firstChild){
         canvasWrapper.removeChild(canvasWrapper.firstChild);

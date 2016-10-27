@@ -192,11 +192,13 @@ Rasterizer.prototype.loadImage = function(image) {
     this.image = image;
 
     // Calculate PPM/ratio/size
-    this.ppm   = 2540 / (this.settings.ppi * 100);
+    this.ppm = 2540 / (this.settings.ppi * 100);
+    this.ppm = parseFloat(this.ppm.toFixed(10));
+
     this.scaleRatio = this.ppm / this.settings.beamSize;
     this.imageSize = {
-        width : this.image.width * this.scaleRatio,
-        height: this.image.height * this.scaleRatio
+        width : Math.round(this.image.width * this.scaleRatio),
+        height: Math.round(this.image.height * this.scaleRatio)
     };
 
     // Trigger "onImage" callback
