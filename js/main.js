@@ -1,11 +1,11 @@
 // Defaults settings
 var settings = {
+    baseUrl  : 'js/',              // Relative url to worker
     ppi      : 254,                // Pixel Per Inch (25.4 ppi == 1 ppm)
     smoothing: false,              // Smoothing the input image ?
     beamSize : 0.1,                // Beam size in millimeters
     beamPower: { min: 0, max: 1 }, // Beam power range (S value)
     feedRate : 1500,               // Feed rate in mm/min (F value)
-    baseUrl  : 'js/',              // Relative url to worker
     trimLine : true,               // Trim trailing white pixels
     joinPixel: true,               // Join consecutive pixels with same intensity
     accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
