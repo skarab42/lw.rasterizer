@@ -11,11 +11,11 @@ function mapPixelPower(value) {
 
 // Get a pixel power value from the canvas data grid
 function getPixelPower(x, y, noMap) {
-    if (x >= settings.imageSize.width) {
+    if (x < 0 || x >= settings.imageSize.width) {
         throw new Error('Out of range: x = ' + x);
     }
 
-    if (y >= settings.imageSize.height) {
+    if (y < 0 || y >= settings.imageSize.height) {
         throw new Error('Out of range: y = ' + y);
     }
 
@@ -56,7 +56,7 @@ function getPixelsRange(y, width) {
     var start = null;
     var end   = null;
 
-    for (x = 0; x <= width; x++) {
+    for (var x = 0; x <= width; x++) {
         if (start === null && getPixelPower(x, y, true)) {
             start = x;
         }
@@ -78,7 +78,7 @@ function getPixelsRange(y, width) {
 // Process canvas grid
 function rasterize() {
     // Vars...
-    var x, rx, X, y, Y, s, S, text, range;
+    var x, rx, X, y, Y, s, S, S2, text, range;
 
     var beam    = settings.beamSize;
     var offset  = beam * 1000 / 2000;
@@ -92,6 +92,22 @@ function rasterize() {
 
         // Get pixel power
         S = getPixelPower(x, y);
+
+        // Skip if next pixel has the same intensity
+        if (settings.joinPixel) {
+            try {
+                // Get pixel power
+                S2 = getPixelPower(reverse ? x - 1 : x + 1, y);
+
+                // Same intensity
+                if (S === S2) {
+                    // Go to next pixel
+                    x = reverse ? x - 1 : x + 1;
+                    return;
+                }
+            }
+            catch (e) { /* End of line */ }
+        }
 
         // Go to start of the line
         text.push('G1 X' + X.toFixed(2) + ' S' + S.toFixed(4));

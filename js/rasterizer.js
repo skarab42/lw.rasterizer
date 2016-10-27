@@ -24,6 +24,7 @@ var Rasterizer = function(settings) {
         feedRate : 1500,               // Feed rate in mm/min (F value)
         baseUrl  : 'js/',              // Relative url to worker
         trimLine : true,               // Trim trailing white pixels
+        joinPixel: false,              // Join consecutive pixels with same intensity
         accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
         onError  : null,
         onFile   : null,
@@ -52,7 +53,7 @@ var Rasterizer = function(settings) {
         if (message.type === 'done') {
             // Elapsed time
             self.time = Date.now() - self.time;
-            
+
             // Trigger "onDone" callback
             if (typeof self.settings.onDone === 'function') {
                 self.settings.onDone.call(self);
