@@ -103,9 +103,11 @@ var gCodeFile = null;
 function onDone() {
     //console.info('onDone');
     jobPercent.innerHTML          = 100;
+    jobTime.innerHTML             = (this.time / 1000).toFixed(2);
     rasterizeButton.style.display = 'inline-block';
     downloadButton.style.display  = 'inline-block';
     showButton.style.display      = 'inline-block';
+    jobDone.style.display         = 'inline-block';
     //jobProgress.style.display     = 'none';
     //gCodeText.innerHTML           = gcode;
     //gCodeWrapper.style.display    = 'block';
@@ -142,6 +144,8 @@ var imageRealWidth  = fileInfo.querySelector('.realWidth');
 var imageRealHeight = fileInfo.querySelector('.realHeight');
 var jobProgress     = fileInfo.querySelector('.jobProgress');
 var jobPercent      = jobProgress.querySelector('.jobPercent');
+var jobDone         = fileInfo.querySelector('.jobDone');
+var jobTime         = jobDone.querySelector('.jobTime');
 
 // Set defaults values
 ppiInput.value                = rasterizer.settings.ppi;
@@ -200,6 +204,7 @@ rasterizeButton.addEventListener('click', function(e) {
     gCodeText.innerHTML           = '';
     rasterizeButton.style.display = 'none';
     downloadButton.style.display  = 'none';
+    jobDone.style.display         = 'none';
     showButton.style.display      = 'none';
     jobProgress.style.display     = 'inline-block';
     jobPercent.innerHTML          = '0';

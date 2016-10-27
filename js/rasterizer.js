@@ -10,6 +10,7 @@ var Rasterizer = function(settings) {
     this.imageSize  = null; // Image size (after scale)
     this.gridSize   = null; // Canvas grid size (x, y)
     this.canvas     = null; // HTML canvas element(s)
+    this.time       = null; // Time taken to rasterize
 
     // http://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
     this.bufferSize = 2048; // resonable safe value ~2048 (TODO device limit detection)
@@ -49,6 +50,9 @@ var Rasterizer = function(settings) {
 
         // On rasterization done
         if (message.type === 'done') {
+            // Elapsed time
+            self.time = Date.now() - self.time;
+            
             // Trigger "onDone" callback
             if (typeof self.settings.onDone === 'function') {
                 self.settings.onDone.call(self);
@@ -265,6 +269,9 @@ Rasterizer.prototype.rasterize = function() {
     if (! this.image) {
         return this.error('No file loaded.');
     }
+
+    // Start time
+    this.time = Date.now();
 
     // Settings
     var data = { type: 'init', data: {} };

@@ -130,6 +130,6 @@ pre, code {
     border: 1px solid #464545;
 }
 
-#downloadButton, #showButton {
+#downloadButton, #showButton, .jobDone {
     display: none;
 }
