@@ -72,7 +72,7 @@ html, body {
 }
 
 #sidebar {
-    width: 320px;
+    width: 340px;
     list-style: none;
 }
 
@@ -96,7 +96,7 @@ html, body {
 
 #workspace {
     right: 0;
-    left: 320px;
+    left: 340px;
 }
 
 #workspace .info span {
