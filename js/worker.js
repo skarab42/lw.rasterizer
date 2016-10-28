@@ -75,10 +75,47 @@ function getPixelsRange(y, width) {
 
 // -----------------------------------------------------------------------------
 
+var lastCommands = { G: null, X: null, Y: null, S: null };
+
+// Compute and return a X/Y/S value
+function GVal(name, values) {
+    if (values[name] !== undefined) {
+        var X = values[name].toFixed(2);
+        if (X !== lastCommands[name]) {
+            lastCommands[name] = X;
+            return name + X;
+        }
+    }
+}
+
+// Compute and return a GCode line
+function G(g, values) {
+    // Commands
+    var commands = [];
+    var value    = null;
+
+    // G command
+    if (settings.verboseG || g !== lastCommands.G) {
+        commands.push('G' + g);
+        lastCommands.G = g;
+    }
+
+    // X/Y/S commands
+    for (var name in values) {
+        value = GVal(name, values);
+        value && commands.push(value);
+    }
+
+    // Return the commands line as string
+    return commands.join(' ');
+}
+
+// -----------------------------------------------------------------------------
+
 // Process canvas grid
 function rasterize() {
     // Vars...
-    var x, rx, X, y, Y, s, S, S2, text, range;
+    var x, rx, X, y, Y, s, S, S2, text, range, lastG;
 
     var beam    = settings.beamSize;
     var offset  = beam * 1000 / 2000;
@@ -111,11 +148,11 @@ function rasterize() {
 
         if (! settings.burnWhite && S === 0) {
             // Move to pixel
-            text.push('G0 X' + X.toFixed(2));
+            text.push(G(0, { X: X }));
         }
         else {
             // Burn pixel
-            text.push('G1 X' + X.toFixed(2) + ' S' + S.toFixed(4));
+            text.push(G(1, { X: X, S: S }));
         }
     }
 
@@ -152,7 +189,7 @@ function rasterize() {
         Y  = ((height - y) * beam) + offset;
 
         // Go to start of the line
-        text.push('G0 X' + X.toFixed(2) + ' Y' + Y.toFixed(2));
+        text.push(G(0, { X: X, Y: Y }));
 
         // For each pixel on the range
         if (reverse) {

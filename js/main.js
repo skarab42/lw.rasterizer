@@ -9,6 +9,7 @@ var settings = {
     trimLine : true,               // Trim trailing white pixels
     joinPixel: true,               // Join consecutive pixels with same intensity
     burnWhite: true,               // [true = G1 S0 | false = G0] on inner white pixels
+    verboseG : true,               // Output verbose GCode (print each commands)
     accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
     onError  : onError,
     onFile   : onFile,
@@ -44,7 +45,8 @@ function storeSettings() {
         feedRate : rasterizer.settings.feedRate,
         trimLine : rasterizer.settings.trimLine,
         joinPixel: rasterizer.settings.joinPixel,
-        burnWhite: rasterizer.settings.burnWhite
+        burnWhite: rasterizer.settings.burnWhite,
+        verboseG : rasterizer.settings.verboseG
     }));
 }
 
@@ -141,6 +143,7 @@ var noFile            = document.querySelector('#noFile');
 var trimLineCheckbox  = document.querySelector('#trimLineCheckbox');
 var joinPixelCheckbox = document.querySelector('#joinPixelCheckbox');
 var burnWhiteCheckbox = document.querySelector('#burnWhiteCheckbox');
+var verboseGCheckbox  = document.querySelector('#verboseGCheckbox');
 
 var fileInfo        = document.querySelector('#fileInfo');
 var fileName        = fileInfo.querySelector('.name');
@@ -162,6 +165,7 @@ smoothingCheckbox.checked     = rasterizer.settings.smoothing;
 trimLineCheckbox.checked      = rasterizer.settings.trimLine;
 joinPixelCheckbox.checked     = rasterizer.settings.joinPixel;
 burnWhiteCheckbox.checked     = rasterizer.settings.burnWhite;
+verboseGCheckbox.checked      = rasterizer.settings.verboseG;
 beamPowerMinInput.value       = rasterizer.settings.beamPower.min * 100;
 beamPowerMaxInput.value       = rasterizer.settings.beamPower.max * 100;
 feedRateInput.value           = rasterizer.settings.feedRate;
@@ -181,6 +185,7 @@ function refreshSettings() {
     rasterizer.settings.trimLine      = trimLineCheckbox.checked;
     rasterizer.settings.joinPixel     = joinPixelCheckbox.checked;
     rasterizer.settings.burnWhite     = burnWhiteCheckbox.checked;
+    rasterizer.settings.verboseG      = verboseGCheckbox.checked;
     rasterizer.settings.beamSize      = beamSizeInput.value;
     rasterizer.settings.beamPower.min = beamPowerMinInput.value / 100;
     rasterizer.settings.beamPower.max = beamPowerMaxInput.value / 100;
@@ -203,6 +208,7 @@ smoothingCheckbox.addEventListener('change', refresh, false);
 trimLineCheckbox.addEventListener('change' , refresh, false);
 joinPixelCheckbox.addEventListener('change', refresh, false);
 burnWhiteCheckbox.addEventListener('change', refresh, false);
+verboseGCheckbox.addEventListener('change', refresh, false);
 beamPowerMinInput.addEventListener('change', refreshSettings, false);
 beamPowerMaxInput.addEventListener('change', refreshSettings, false);
 feedRateInput.addEventListener('change'    , refreshSettings, false);

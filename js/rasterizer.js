@@ -26,6 +26,7 @@ var Rasterizer = function(settings) {
         trimLine : true,               // Trim trailing white pixels
         joinPixel: false,              // Join consecutive pixels with same intensity
         burnWhite: true,               // [true = G1 S0 | false = G0] on inner white pixels
+        verboseG : true,               // Print G1/2 commands on each move
         accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
         onError  : null,
         onFile   : null,
