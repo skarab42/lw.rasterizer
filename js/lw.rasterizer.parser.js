@@ -1,6 +1,9 @@
 // Canvas data grid
 var settings, canvas;
 
+// Last commands values
+var lastCommands = { G: null, X: null, Y: null, S: null };
+
 // -----------------------------------------------------------------------------
 
 // Get a pixel power value from the canvas data grid
@@ -74,8 +77,6 @@ function getPixelsRange(y, width) {
 }
 
 // -----------------------------------------------------------------------------
-
-var lastCommands = { G: null, X: null, Y: null, S: null };
 
 // Compute and return a X/Y/S value
 function GVal(name, values) {

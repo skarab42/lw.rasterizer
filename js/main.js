@@ -33,7 +33,7 @@ if (store) {
 // -----------------------------------------------------------------------------
 
 // Create rasterizer instance
-var rasterizer = new Rasterizer(settings);
+var rasterizer = new lw.Rasterizer(settings);
 
 // Store rasterizer settings
 function storeSettings() {
