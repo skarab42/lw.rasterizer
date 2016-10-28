@@ -34,6 +34,7 @@ var lw = lw || {};
             joinPixel: false,              // Join consecutive pixels with same intensity
             burnWhite: true,               // [true = G1 S0 | false = G0] on inner white pixels
             verboseG : true,               // Output verbose GCode (print each commands)
+            diagonal : false,              // Go diagonally (increase the distance between pixels)
             accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
             onError  : null,
             onFile   : null,

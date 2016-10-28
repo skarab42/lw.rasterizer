@@ -157,55 +157,88 @@ function rasterize() {
         }
     }
 
-    // For each image line
-    for (y = height; y >= 0; y--) {
-        // Reset gcode text
-        text = [];
+    function horizontalScan() {
+        // For each image line
+        for (y = height; y >= 0; y--) {
+            // Reset gcode text
+            text = [];
 
-        // Reverse line
-        reverse = !reverse;
+            // Reverse line
+            reverse = !reverse;
 
-        // Get non white pixels range
-        if (settings.trimLine) {
-            range = getPixelsRange(y, width);
+            // Get non white pixels range
+            if (settings.trimLine) {
+                range = getPixelsRange(y, width);
 
-            // Skip empty line
-            if (! range.length) {
-                continue;
+                // Skip empty line
+                if (! range.length) {
+                    continue;
+                }
+            }
+            else {
+                range = { start: 0, end: width, length: width };
+            }
+
+            // Debug...
+            //console.log(range);
+
+            // First pixel position
+            rx = range.start;
+
+            // Set first pixel position
+            X  = reverse ? (rx + range.length) : rx;
+            X  = (X * beam) + offset;
+            Y  = ((height - y) * beam) + offset;
+
+            // Go to start of the line
+            text.push(G(0, { X: X, Y: Y }));
+
+            // For each pixel on the range
+            if (reverse) {
+                for (x = range.end; x >= range.start; x--) {
+                    moveTo(x);
+                }
+            }
+            else {
+                for (x = range.start; x <= range.end; x++) {
+                    moveTo(x);
+                }
+            }
+
+            // Post the gcode pixel line
+            postMessage({ type: 'gcode', data: { line: y, text: text.join('\n') } });
+        }
+    }
+    function diagonalScan() {
+        var $grid = [];
+        var $h     = 4;
+        var $w     = 5;
+        var $count = 1;
+
+        for ($i = 0; $i <= $w + $h; $i++) {
+            var $index = Math.min($i, $w);
+            var $row   = Math.max(1, ($i - ($w + 1) + 2));
+
+            while ($index != 0 && $row <= $h) {
+                if (! $grid[$row]) {
+                    $grid[$row] = [];
+                }
+                $grid[$row][$index] = $count;
+                console.log($row, $index, $count);
+                $count++;
+                $index--;
+                $row++;
             }
         }
-        else {
-            range = { start: 0, end: width, length: width };
-        }
 
-        // Debug...
-        //console.log(range);
+        console.log($grid);
+    }
 
-        // First pixel position
-        rx = range.start;
-
-        // Set first pixel position
-        X  = reverse ? (rx + range.length) : rx;
-        X  = (X * beam) + offset;
-        Y  = ((height - y) * beam) + offset;
-
-        // Go to start of the line
-        text.push(G(0, { X: X, Y: Y }));
-
-        // For each pixel on the range
-        if (reverse) {
-            for (x = range.end; x >= range.start; x--) {
-                moveTo(x);
-            }
-        }
-        else {
-            for (x = range.start; x <= range.end; x++) {
-                moveTo(x);
-            }
-        }
-
-        // Post the gcode pixel line
-        postMessage({ type: 'gcode', data: { line: y, text: text.join('\n') } });
+    if (settings.diagonal) {
+        diagonalScan();
+    }
+    else {
+        horizontalScan();
     }
 
     postMessage({ type: 'done' });
