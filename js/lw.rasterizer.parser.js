@@ -236,6 +236,17 @@ var lw = lw || {};
 
     // Process pixels line and return an array of GCode lines
     lw.RasterizerParser.prototype.processLine = function(line) {
+        // Trim trailing white spaces ?
+        if (this.trimLine) {
+            // Get reduced line
+            line = this.trimWhiteSpaces(line);
+
+            // Empty line (white)
+            if (! line) {
+                return null;
+            }
+        }
+        
         // Toggle reverded line flag
         this.reversedLine = ! this.reversedLine;
 
@@ -265,7 +276,7 @@ var lw = lw || {};
                 gcode.push(this.command(this.G0, ['X', pixel.X], ['Y', pixel.Y], ['S', 0]));
             }
 
-            // G command
+            // G command depending on pixel power
             G = pixel.s ? ['G', 1] : this.G0;
 
             // Burn to pixel coordinates
