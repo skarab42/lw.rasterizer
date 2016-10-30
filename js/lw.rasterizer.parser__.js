@@ -9,7 +9,7 @@ var lw = lw || {};
     lw.RasterizerParser = function() {
         this.canvasGrid   = null;
         this.lastCommands = null;
-        this.reversedLine  = null;
+        this.reverseLine  = null;
         this.beamOffset   = null;
     };
 
@@ -20,14 +20,11 @@ var lw = lw || {};
         // Reset parser settings and state
         this.canvasGrid   = [];
         this.lastCommands = {};
-        this.reversedLine  = true;
+        this.reverseLine  = true;
 
         for (var prop in settings) {
             this[prop] = settings[prop];
         }
-
-        // G0 command
-        this.G0 = ['G', this.burnWhite ? 1 : 0];
 
         // Calculate beam offset
         this.beamOffset    = this.beamSize * 1000 / 2000;
@@ -116,6 +113,9 @@ var lw = lw || {};
         }
 
         // Format the value
+        if (typeof value !== 'number') {
+            console.error('!', typeof value, value);
+        }
         value = value.toFixed(this.precision[name] || 0);
 
         // If the value was changed or if verbose mode on
@@ -213,66 +213,73 @@ var lw = lw || {};
         return null;
     };
 
-    // Return an pixel from the provided line
-    lw.RasterizerParser.prototype.getPixel = function(i, line) {
-        var x, X, y, Y, s, S;
-
-        // Pixel coordinates
-        x = line[i][0];
-        y = line[i][1];
-
-        // Pixel power
-        s = this.getPixelPower(x, y, true);
-
-        // Pixel real world coordinates
-        X = (x * this.beamSize) + this.beamOffset;
-        Y = (y * this.beamSize) + this.beamOffset;
-
-        // Maped pixel power
-        S = this.mapPixelPower(s);
-
-        return { x: x, X: X, y: y, Y: Y, s: s, S: S };
-    };
-
     // Process pixels line and return an array of GCode lines
     lw.RasterizerParser.prototype.processLine = function(line) {
-        // Toggle reverded line flag
-        this.reversedLine = ! this.reversedLine;
+        // Trim trailing white spaces ?
+        if (this.trimLine) {
+            // Get reduced line
+            line = this.trimWhiteSpaces(line);
 
-        // Reverse line (horizontal mode only)
-        if (! this.diagonal && this.reversedLine) {
-            // Reverse pixels line order
+            // Empty line (white)
+            if (! line) {
+                return null;
+            }
+        }
+
+        // Reverse line
+        this.reverseLine = !this.reverseLine;
+
+        if (! this.diagonal && this.reverseLine) {
             line = line.reverse();
         }
 
-        // GCode commands
-        var G, gcode = [];
-
-        // Get first pixel of the line
-        var pixel = this.getPixel(0, line);
-
-        // Move to start of line (force S to 0)
-        gcode.push(this.command(this.G0, ['X', pixel.X], ['Y', pixel.Y], ['S', 0]));
+        // GCode commands array
+        var i, x, y, s, lastS, gcode = [];
 
         // For each pixel in the line
-        for (var i = 0; i < line.length; i++) {
-            // Get pixel at current index
-            pixel = this.getPixel(i, line);
+        for (i = 0; i < line.length; i++) {
+            // Current pixel
+            x = line[i][0];
+            y = line[i][1];
 
-            // If first non white pixel after an serie of white pixels
-            if (this.lastCommands.S == 0 && pixel.s > 0) {
-                // Move to pixel before burning (force S to 0)
-                gcode.push(this.command(this.G0, ['X', pixel.X], ['Y', pixel.Y], ['S', 0]));
+            // Pixel power (reverse Y value since canvas as top/left origin)
+            s = this.getPixelPower(x, y, true);
+
+            // Current pixel real coordinates
+            x = (x * this.beamSize) + this.beamOffset;
+            y = (y * this.beamSize) + this.beamOffset;
+
+            // First pixel
+            if (i === 0) {
+                // Move to start of line (force S to 0)
+                gcode.push(this.command(['G', 0], ['X', x], ['Y', y], ['S', 0]));
             }
 
-            // G command
-            G = pixel.s ? ['G', 1] : this.G0;
+            if (! this.burnWhite && s == 0) {
+                // Move to pixel if not the first one
+                i && gcode.push(this.command(['G', 0], ['X', x], ['Y', y], ['S', 0]));
+            }
+            else {
+                // Map pixel power
+                s = this.mapPixelPower(s);
 
-            // Burn to pixel coordinates
-            gcode.push(this.command(G, ['X', pixel.X], ['Y', pixel.Y], ['S', pixel.S]));
+                // Skip if next pixel has the same intensity
+                // if (settings.joinPixel) {
+                //     if (lastS === s) {
+                //         continue;
+                //     }
+                //     lastS = s;
+                // }
+
+                if (this.lastCommands.G === 0) {
+                    gcode.push(this.command(['G', 0], ['X', x], ['Y', y], ['S', 0]));
+                }
+
+                // Burn the pixel
+                gcode.push(this.command(['G', 1], ['X', x], ['Y', y], ['S', s]));
+            }
         }
 
-        // Return gcode commands array
         return gcode;
     };
 

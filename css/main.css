@@ -16,6 +16,10 @@ html, body {
     background-color: #222222;
 }
 
+pre, code {
+    font-family: monospace;
+}
+
 .control, .info {
     color: #00bc8c;
     font-size: 0.8em;
@@ -30,6 +34,11 @@ html, body {
     color: #f3f3f3;
     text-align: center;
     background-color: transparent;
+}
+
+.control :disabled {
+    color: #555;
+    cursor: not-allowed;
 }
 
 .button {

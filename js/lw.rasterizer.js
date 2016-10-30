@@ -24,17 +24,19 @@ var lw = lw || {};
 
         // Defaults settings
         this.settings  = {
-            baseUrl  : 'js/',              // Relative url to worker with trailing slash
-            ppi      : 254,                // Pixel Per Inch (25.4 ppi == 1 ppm)
-            smoothing: false,              // Smoothing the input image ?
-            beamSize : 0.1,                // Beam size in millimeters
-            beamPower: { min: 0, max: 1 }, // Beam power range (S value)
-            feedRate : 1500,               // Feed rate in mm/min (F value)
-            trimLine : true,               // Trim trailing white pixels
-            joinPixel: false,              // Join consecutive pixels with same intensity
-            burnWhite: true,               // [true = G1 S0 | false = G0] on inner white pixels
-            verboseG : true,               // Output verbose GCode (print each commands)
-            diagonal : false,              // Go diagonally (increase the distance between pixels)
+            baseUrl  : 'js/',                // Relative url to worker with trailing slash
+            ppi      : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
+            smoothing: false,                // Smoothing the input image ?
+            beamSize : 0.1,                  // Beam size in millimeters
+            beamRange: { min: 0, max: 1 },   // Beam power range (Firmware value)
+            beamPower: { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
+            feedRate : 1500,                 // Feed rate in mm/min (F value)
+            trimLine : true,                 // Trim trailing white pixels
+            joinPixel: false,                // Join consecutive pixels with same intensity
+            burnWhite: true,                 // [true = G1 S0 | false = G0] on inner white pixels
+            verboseG : true,                 // Output verbose GCode (print each commands)
+            diagonal : false,                // Go diagonally (increase the distance between pixels)
+            precision: { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
             accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
             onError  : null,
             onFile   : null,
@@ -53,7 +55,9 @@ var lw = lw || {};
 
         // Init worker
         var self    = this;
-        self.worker = new Worker(this.settings.baseUrl + 'lw.rasterizer.parser.js');
+        self.worker = new Worker(
+            this.settings.baseUrl + 'lw.rasterizer.parser.js'
+        );
 
         self.worker.onmessage = function(event) {
             // Get message data
@@ -74,14 +78,13 @@ var lw = lw || {};
             else if (message.type === 'gcode') {
                 // Trigger "onGCode" callback
                 if (typeof self.settings.onGCode === 'function') {
-                    var p = Math.round((message.data.line / self.imageSize.height) * 100);
-                    self.settings.onGCode.call(self, message.data, 100 - p);
+                    self.settings.onGCode.call(self, message.data);
                 }
             }
         }
     };
 
-    // -----------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     // Notify an error via the user defined "onError" callback
     // or throwan error if the callback is not defined (or not an Function)
@@ -93,7 +96,7 @@ var lw = lw || {};
         this.settings.onError.call(this, message);
     };
 
-    // -----------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     // Process loaded image
     lw.Rasterizer.prototype.processImage = function() {
@@ -138,7 +141,8 @@ var lw = lw || {};
 
                 // Set canvas size
                 if (x === 0 || x < (this.gridSize.x - 1)) {
-                    canvas.width = this.imageSize.width < this.bufferSize ? this.imageSize.width : this.bufferSize;
+                    canvas.width = this.imageSize.width < this.bufferSize
+                                 ? this.imageSize.width : this.bufferSize;
                 }
                 else {
                     // Get the rest for the last item (except the first one)
@@ -146,7 +150,8 @@ var lw = lw || {};
                 }
 
                 if (y === 0 || y < (this.gridSize.y - 1)) {
-                    canvas.height = this.imageSize.height < this.bufferSize ? this.imageSize.height : this.bufferSize;
+                    canvas.height = this.imageSize.height < this.bufferSize
+                                  ? this.imageSize.height : this.bufferSize;
                 }
                 else {
                     // Get the rest for the last item (except the first one)
@@ -177,7 +182,9 @@ var lw = lw || {};
                 sy = y * this.bufferSize / this.scaleRatio;
 
                 context.drawImage(
-                    this.image, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height
+                    this.image,
+                    sx, sy, sw, sh,
+                    0, 0, canvas.width, canvas.height
                 );
 
                 // Add the canvas to current line
@@ -194,7 +201,7 @@ var lw = lw || {};
         }
     };
 
-    // -----------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     // Load a Image object
     lw.Rasterizer.prototype.loadImage = function(image) {
@@ -225,7 +232,7 @@ var lw = lw || {};
         this.processImage();
     };
 
-    // -----------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     // Load a File object
     lw.Rasterizer.prototype.loadFile = function(file) {
@@ -265,14 +272,14 @@ var lw = lw || {};
         }, false);
 
         image.addEventListener('error', function(event) {
-            self.error('Unable to load the file as an image (' + event.type + ').');
+            self.error('Unable to load the image (' + event.type + ').');
         }, false);
 
         // Load the image from File url
         image.src = URL.createObjectURL(self.file);
     };
 
-    // -----------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     // Rasterize the loaded Image object
     lw.Rasterizer.prototype.rasterize = function() {
@@ -293,6 +300,7 @@ var lw = lw || {};
             }
         }
 
+        data.data.version    = this.version;
         data.data.ppm        = this.ppm;
         data.data.scaleRatio = this.scaleRatio;
         data.data.imageSize  = this.imageSize;
@@ -300,7 +308,7 @@ var lw = lw || {};
         data.data.bufferSize = this.bufferSize;
 
         // Post init command to the worker
-        this.worker.postMessage(JSON.stringify(data));
+        this.worker.postMessage(data);
 
         // Init vars...
         var x, y, cell, imageData;
@@ -317,15 +325,17 @@ var lw = lw || {};
                     0, 0, cell.width, cell.height
                 );
 
-                cell = { type: 'cell', x: x, y: y, data: imageData.data };
+                cell = { type: 'addCell', data: {
+                    x: x, y: y, buffer: imageData.data
+                }};
 
                 // Post the image data buffer to the worker
-                this.worker.postMessage(cell, [cell.data.buffer]);
+                this.worker.postMessage(cell, [cell.data.buffer.buffer]);
             }
         }
 
-        // Post all cell send to the worker
-        this.worker.postMessage({ type: 'done' });
+        // Post all cell send to the worker and request parsing
+        this.worker.postMessage({ type: 'parse' });
     };
 
 })();

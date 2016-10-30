@@ -23,13 +23,19 @@
                         <input id="beamPowerMaxInput" type="number" min="0" max="100" step="1" placeholder="100" /> %
                     </label>
                 </li>
+                <li>
+                    <label class="control"><span>Beam range</span> :
+                        <input id="beamRangeMinInput" type="number" min="0" placeholder="0" value="0" disabled /> to
+                        <input id="beamRangeMaxInput" type="number" min="0" placeholder="1" />
+                    </label>
+                </li>
                 <li><label class="control"><span>Feed rate</span> : <input id="feedRateInput" type="number" min="1" step="1" placeholder="1500" /> mm/min</label></li>
                 <li><label class="control"><input id="smoothingCheckbox" type="checkbox" /> Smoothing (input image)</label></li>
                 <li><label class="control"><input id="trimLineCheckbox" type="checkbox" /> Trim trailing white pixels</label></li>
                 <li><label class="control"><input id="joinPixelCheckbox" type="checkbox" /> Join consecutive pixels with same intensity</label></li>
                 <li><label class="control"><input id="burnWhiteCheckbox" type="checkbox" /> Burn white pixels at no power (G1 S0)</label></li>
                 <li><label class="control"><input id="verboseGCheckbox" type="checkbox" /> Verbose GCode output</label></li>
-                <li><label class="control"><input id="diagonalCheckbox" type="checkbox" /> Go diagonally</label></li>
+                <li><label class="control"><input id="diagonalCheckbox" type="checkbox" /> Diagonal vs Horizontal paths</label></li>
                 <li>
                     <a class="github-button" href="https://github.com/lautr3k/lw.Rasterizer.js/fork" data-style="mega" data-count-href="/lautr3k/lw.Rasterizer.js/network" data-count-api="/repos/lautr3k/lw.Rasterizer.js#forks_count" data-count-aria-label="# forks on GitHub" aria-label="Fork lautr3k/lw.Rasterizer.js on GitHub">Fork</a>
                     <a class="github-button" href="https://github.com/lautr3k/lw.Rasterizer.js" data-icon="octicon-star" data-style="mega" data-count-href="/lautr3k/lw.Rasterizer.js/stargazers" data-count-api="/repos/lautr3k/lw.Rasterizer.js#stargazers_count" data-count-aria-label="# stargazers on GitHub" aria-label="Star lautr3k/lw.Rasterizer.js on GitHub">Star</a>
