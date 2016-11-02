@@ -152,7 +152,7 @@ var lw = lw || {};
     // -------------------------------------------------------------------------
 
     // Get a pixel power value from the canvas data grid
-    lw.RasterizerParser.prototype.getPixelPower = function(x, y, noMap) {
+    lw.RasterizerParser.prototype.getPixelPower = function(x, y, map) {
         if (x < 0 || x >= this.imageSize.width) {
             throw new Error('Out of range: x = ' + x);
         }
@@ -180,52 +180,29 @@ var lw = lw || {};
         var gray = 255 - ((data[i] + data[i + 1] + data[i + 2]) / 3);
 
         // Return pixel power
-        return noMap ? gray : this.mapPixelPower(gray);
-    };
-
-    // -------------------------------------------------------------------------
-
-    // Create and return an point object
-    lw.RasterizerParser.prototype.createPoint = function(x, y, s) {
-        // Pixel object
-        var point = { x: x, X: null, y: y, Y: null, s: s, S: null };
-
-        // Real world point coordinates
-        point.X = (point.x * this.beamSize);
-        point.Y = (point.y * this.beamSize);
-
-        // Pixel power
-        if (point.s === undefined) {
-            point.s = this.getPixelPower(point.x, point.y, true);
-        }
-
-        // Maped point power
-        point.S = this.mapPixelPower(point.s);
-
-        // Return point object
-        return point;
+        return map ? this.mapPixelPower(gray) : gray;
     };
 
     // -------------------------------------------------------------------------
 
     lw.RasterizerParserLine = function(even) {
-        this.even   = !!even || false;
-        this.points = [];
-        this.length = 0;
-        this.index  = -1;
+        this.even     = !!even;
+        this.segments = [];
+        this.index    = -1;
+        this.length   = 0;
     };
 
-    lw.RasterizerParserLine.prototype.addPoint = function(point) {
-        this.points[this.even ? 'unshift' : 'push'](point);
-        this.length = this.points.length;
+    lw.RasterizerParserLine.prototype.addSegment = function(segment) {
+        this.segments[this.even ? 'unshift' : 'push'](segment);
+        this.length = this.segments.length;
     };
 
-    lw.RasterizerParserLine.prototype.getPoint = function(index) {
-        return this.points[index] || null;
+    lw.RasterizerParserLine.prototype.getSegment = function(index) {
+        return this.segments[index] || null;
     };
 
-    lw.RasterizerParserLine.prototype.getNextPoint = function() {
-        return this.getPoint(++this.index) || null;
+    lw.RasterizerParserLine.prototype.getNextSegment = function() {
+        return this.getSegment(++this.index) || null;
     };
 
     lw.RasterizerParserLine.prototype.rewind = function() {
@@ -234,64 +211,64 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
-    // ...
-    lw.RasterizerParser.prototype.getNextPoint = function() {
-        // Get next point from the current line
-        var line  = this.currentLine;
-        var point = line.getNextPoint();
+    // Return point real world coordinates
+    lw.RasterizerParser.prototype.getPointCoords = function(point) {
+        // Real world segment coordinates
+        point.X = (point.x * this.beamSize);
+        point.Y = (point.y * this.beamSize);
 
-        // No more point
-        if (! point) {
-            return null;
-        }
-
-        // If not the first call
-        if (point.G) {
-            return point;
-        }
-
-        // G command depending on pixel power
-        point.G = point.s ? ['G', 1] : this.G0;
-
-        // Horizontal mode
-        if (! this.diagonal) {
-            // Vertical offset
-            point.Y += this.beamOffset;
-
-            // If first point
-            if (line.index === 0) {
-                point.X += line.even ? -this.beamOffset : this.beamOffset;
-            }
-            else if (line.index === (line.length - 1)) {
-                point.X += line.even ? this.beamOffset : -this.beamOffset;
-            }
-        }
-
-        // return point
+        // Return segment object
         return point;
-    }
+    };
+
+    // Return point real world coordinates
+    lw.RasterizerParser.prototype.getSegmentCoords = function(segment) {
+        // Real world segment coordinates
+        segment.p1 = this.getPointCoords(segment.p1);
+        segment.p2 = this.getPointCoords(segment.p2);
+
+        // Vertical offset
+        segment.p1.Y += this.beamOffset;
+        segment.p2.Y += this.beamOffset;
+
+        if (segment.lastColored) {
+            segment.p2.X -= this.beamOffset;
+        }
+
+        // Return segment
+        return segment;
+    };
 
     // -------------------------------------------------------------------------
 
-    // Process pixels line and return an array of GCode lines
+    // Process current line and return an array of GCode text lines
     lw.RasterizerParser.prototype.processCurrentLine = function() {
         // Init loop vars...
-        var point, command, gcode = [];
+        var segment, coords, command, G, S, gcode = [];
 
-        // Get first point
-        point = this.getNextPoint();
+        // Get first segment
+        segment = this.currentLine.getSegment(0);
+
+        // Get segment real world coordinates
+        coords = this.getSegmentCoords(segment);
 
         // Move to start of line (force S to 0)
-        command = this.command(this.G0, ['X', point.X], ['Y', point.Y], ['S', 0]);
+        command = this.command(this.G0, ['X', coords.p1.X], ['Y', coords.p1.Y], ['S', 0]);
         command && gcode.push(command);
 
-        // Rewind to start of line
-        this.currentLine.rewind();
+        // For each segments on the line
+        while ((segment = this.currentLine.getNextSegment())) {
+            // Get segment real world coordinates
+            coords = this.getSegmentCoords(segment);
 
-        // For each points on the line
-        while ((point = this.getNextPoint())) {
+            // G command depending on pixel power
+            G = segment.s ? ['G', 1] : this.G0;
+
+            // Map s value
+            S = this.mapPixelPower(segment.s);
+
             // Burn to next pixel
-            command = this.command(point.G, ['X', point.X], ['Y', point.Y], ['S', point.S]);
+            command = this.command(G, ['X', coords.p2.X], ['Y', coords.p2.Y], ['S', S]);
             command && gcode.push(command);
         }
 
@@ -309,30 +286,96 @@ var lw = lw || {};
     // Parse horizontally
     lw.RasterizerParser.prototype.parseHorizontally = function() {
         // Init loop vars
-        var x, y, s, even, point, gcode;
+        var x, y, s, p1, p2, lastSegment, even, segment, gcode;
 
         var w = this.imageSize.width;
         var h = this.imageSize.height;
 
-        // For each image line
+        // For each pixels line
         for (y = 0; y < h; y++) {
-            // Create new line
+            // Create new parser line
             this.currentLine = new lw.RasterizerParserLine(even);
 
-            // For each pixel on the line
+            // reset s value
+            lastSegment = { s: 0 };
+
+            // For each pixel
             for (x = 0; x < w; x++) {
-                // Pixel power
-                s = this.getPixelPower((! even && x) ? x - 1 : x, y, true);
+                // Segment
+                p1 = { x: x, y: y };
+                p2 = { x: x + 1, y: y };
 
-                // Create pixel point
-                point = this.createPoint(x, y, s);
+                // Swap points on event line
+                if (even) {
+                    p2 = [p1, p1 = p2][0];
+                }
 
-                // Add new point
-                this.currentLine.addPoint(point);
+                // Get pixel power
+                s = this.getPixelPower(x, y);
+
+                // Create pixel segment
+                segment = { p1: p1, p2: p2, s: s };
+
+                var type = segment.s ? 'Colored' : 'White';
+
+                // If first/last pixel
+                if (x === 0) {
+                    segment[even ? 'last' : 'first'] = true;
+                    console.log(even ? 'last' : 'first', segment.p1, segment.p2);
+                    segment[(segment.first ? 'first' : 'last') + type] = true;
+                    console.error((segment.first ? 'first' : 'last') + type, segment.p1, segment.p2);
+                }
+                else if (x === (w - 1)) {
+                    segment[even ? 'first' : 'last'] = true;
+                    console.log(even ? 'first' : 'last', segment.p1, segment.p2);
+                    segment[(segment.first ? 'first' : 'last') + type] = true;
+                    console.error((segment.first ? 'first' : 'last') + type, segment.p1, segment.p2);
+                }
+
+                // If first/last colored pixel
+                else if (lastSegment.s == 0 && segment.s > 0) {
+                    segment[even ? 'lastColored' : 'firstColored'] = true;
+
+                    if (lastSegment.p1) {
+                        if (segment.firstColored) {
+                            lastSegment.lastWhite = true;
+                            console.warn('lastWhite', lastSegment.p1, lastSegment.p2);
+                        }
+                        else if (segment.lastColored) {
+                            lastSegment.firstWhite = true;
+                            console.info('firstWhite', lastSegment.p1, lastSegment.p2);
+                        }
+                    }
+
+                    console.log(even ? 'lastColored' : 'firstColored', segment.p1, segment.p2);
+                }
+
+                // If first/last white pixel
+                else if (lastSegment.s > 0 && segment.s == 0) {
+                    segment[even ? 'lastWhite' : 'firstWhite'] = true;
+
+                    if (lastSegment.p1) {
+                        if (segment.firstWhite) {
+                            lastSegment.lastColored = true;
+                            console.warn('lastColored', lastSegment.p1, lastSegment.p2);
+                        }
+                        else if (segment.lastWhite) {
+                            lastSegment.firstColored = true;
+                            console.info('firstColored', lastSegment.p1, lastSegment.p2);
+                        }
+                    }
+
+                    console.log(even ? 'lastWhite' : 'firstWhite', segment.p1, segment.p2);
+                }
+
+                // Store last segment
+                lastSegment = segment;
+
+                // Add new line
+                this.currentLine.addSegment(segment);
             }
 
-            // Add trailing pixel point
-            this.currentLine.addPoint(this.createPoint(x, y, point.s));
+            console.log(this.currentLine);
 
             // Process pixels line
             gcode = this.processCurrentLine();
