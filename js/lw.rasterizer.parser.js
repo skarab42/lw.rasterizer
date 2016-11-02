@@ -222,7 +222,22 @@ var lw = lw || {};
     };
 
     // Return point real world coordinates
-    lw.RasterizerParser.prototype.getSegmentCoords = function(segment) {
+    lw.RasterizerParser.prototype.getNextSegment = function() {
+        // Get next segment
+        var line    = this.currentLine;
+        var segment = line.getNextSegment();
+
+        // No more segment
+        if (! segment) {
+            return null;
+        }
+
+        // G command depending on pixel power
+        segment.G = segment.s ? ['G', 1] : this.G0;
+
+        // Map s value
+        segment.S = this.mapPixelPower(segment.s);
+
         // Real world segment coordinates
         segment.p1 = this.getPointCoords(segment.p1);
         segment.p2 = this.getPointCoords(segment.p2);
@@ -231,8 +246,15 @@ var lw = lw || {};
         segment.p1.Y += this.beamOffset;
         segment.p2.Y += this.beamOffset;
 
-        if (segment.lastColored) {
-            segment.p2.X -= this.beamOffset;
+        // Horizontal offset
+        if (segment.lastColored || segment.last) {
+            segment.p2.X += line.even ? this.beamOffset : -this.beamOffset;
+        }
+        else if (segment.lastWhite) {
+            segment.p2.X += line.even ? -this.beamOffset : this.beamOffset;
+        }
+        else if (segment.first) {
+            segment.p1.X += line.even ? -this.beamOffset : this.beamOffset;
         }
 
         // Return segment
@@ -244,32 +266,23 @@ var lw = lw || {};
     // Process current line and return an array of GCode text lines
     lw.RasterizerParser.prototype.processCurrentLine = function() {
         // Init loop vars...
-        var segment, coords, command, G, S, gcode = [];
+        var command, gcode = [];
 
         // Get first segment
-        segment = this.currentLine.getSegment(0);
-
-        // Get segment real world coordinates
-        coords = this.getSegmentCoords(segment);
+        var segment = this.getNextSegment();
 
         // Move to start of line (force S to 0)
-        command = this.command(this.G0, ['X', coords.p1.X], ['Y', coords.p1.Y], ['S', 0]);
+        command = this.command(this.G0, ['X', segment.p1.X], ['Y', segment.p1.Y], ['S', 0]);
         command && gcode.push(command);
 
         // For each segments on the line
-        while ((segment = this.currentLine.getNextSegment())) {
-            // Get segment real world coordinates
-            coords = this.getSegmentCoords(segment);
-
-            // G command depending on pixel power
-            G = segment.s ? ['G', 1] : this.G0;
-
-            // Map s value
-            S = this.mapPixelPower(segment.s);
-
+        while (segment) {
             // Burn to next pixel
-            command = this.command(G, ['X', coords.p2.X], ['Y', coords.p2.Y], ['S', S]);
+            command = this.command(segment.G, ['X', segment.p2.X], ['Y', segment.p2.Y], ['S', segment.S]);
             command && gcode.push(command);
+
+            // Get next segment
+            segment = this.getNextSegment();
         }
 
         // Return gcode commands array
@@ -305,7 +318,7 @@ var lw = lw || {};
                 p1 = { x: x, y: y };
                 p2 = { x: x + 1, y: y };
 
-                // Swap points on event line
+                // Swap points on even line
                 if (even) {
                     p2 = [p1, p1 = p2][0];
                 }
@@ -321,17 +334,12 @@ var lw = lw || {};
                 // If first/last pixel
                 if (x === 0) {
                     segment[even ? 'last' : 'first'] = true;
-                    //console.log(even ? 'last' : 'first', segment.p1, segment.p2);
                     segment[(segment.first ? 'first' : 'last') + type] = true;
-                    //console.error((segment.first ? 'first' : 'last') + type, segment.p1, segment.p2);
                 }
                 else if (x === (w - 1)) {
                     segment[even ? 'first' : 'last'] = true;
-                    //console.log(even ? 'first' : 'last', segment.p1, segment.p2);
                     segment[(segment.first ? 'first' : 'last') + type] = true;
-                    //console.error((segment.first ? 'first' : 'last') + type, segment.p1, segment.p2);
                 }
-
                 // If first/last colored pixel
                 else if (lastSegment.s == 0 && segment.s > 0) {
                     segment[even ? 'lastColored' : 'firstColored'] = true;
@@ -339,17 +347,12 @@ var lw = lw || {};
                     if (lastSegment.p1) {
                         if (segment.firstColored) {
                             lastSegment.lastWhite = true;
-                            //console.warn('lastWhite', lastSegment.p1, lastSegment.p2);
                         }
                         else if (segment.lastColored) {
                             lastSegment.firstWhite = true;
-                            //console.info('firstWhite', lastSegment.p1, lastSegment.p2);
                         }
                     }
-
-                    //console.log(even ? 'lastColored' : 'firstColored', segment.p1, segment.p2);
                 }
-
                 // If first/last white pixel
                 else if (lastSegment.s > 0 && segment.s == 0) {
                     segment[even ? 'lastWhite' : 'firstWhite'] = true;
@@ -357,15 +360,11 @@ var lw = lw || {};
                     if (lastSegment.p1) {
                         if (segment.firstWhite) {
                             lastSegment.lastColored = true;
-                            //console.warn('lastColored', lastSegment.p1, lastSegment.p2);
                         }
                         else if (segment.lastWhite) {
                             lastSegment.firstColored = true;
-                            //console.info('firstColored', lastSegment.p1, lastSegment.p2);
                         }
                     }
-
-                    //console.log(even ? 'lastWhite' : 'firstWhite', segment.p1, segment.p2);
                 }
 
                 // Store last segment
@@ -374,8 +373,6 @@ var lw = lw || {};
                 // Add new line
                 this.currentLine.addSegment(segment);
             }
-
-            //console.log(this.currentLine);
 
             // Process pixels line
             gcode = this.processCurrentLine();
