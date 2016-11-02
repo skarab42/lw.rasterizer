@@ -321,15 +321,15 @@ var lw = lw || {};
                 // If first/last pixel
                 if (x === 0) {
                     segment[even ? 'last' : 'first'] = true;
-                    console.log(even ? 'last' : 'first', segment.p1, segment.p2);
+                    //console.log(even ? 'last' : 'first', segment.p1, segment.p2);
                     segment[(segment.first ? 'first' : 'last') + type] = true;
-                    console.error((segment.first ? 'first' : 'last') + type, segment.p1, segment.p2);
+                    //console.error((segment.first ? 'first' : 'last') + type, segment.p1, segment.p2);
                 }
                 else if (x === (w - 1)) {
                     segment[even ? 'first' : 'last'] = true;
-                    console.log(even ? 'first' : 'last', segment.p1, segment.p2);
+                    //console.log(even ? 'first' : 'last', segment.p1, segment.p2);
                     segment[(segment.first ? 'first' : 'last') + type] = true;
-                    console.error((segment.first ? 'first' : 'last') + type, segment.p1, segment.p2);
+                    //console.error((segment.first ? 'first' : 'last') + type, segment.p1, segment.p2);
                 }
 
                 // If first/last colored pixel
@@ -339,15 +339,15 @@ var lw = lw || {};
                     if (lastSegment.p1) {
                         if (segment.firstColored) {
                             lastSegment.lastWhite = true;
-                            console.warn('lastWhite', lastSegment.p1, lastSegment.p2);
+                            //console.warn('lastWhite', lastSegment.p1, lastSegment.p2);
                         }
                         else if (segment.lastColored) {
                             lastSegment.firstWhite = true;
-                            console.info('firstWhite', lastSegment.p1, lastSegment.p2);
+                            //console.info('firstWhite', lastSegment.p1, lastSegment.p2);
                         }
                     }
 
-                    console.log(even ? 'lastColored' : 'firstColored', segment.p1, segment.p2);
+                    //console.log(even ? 'lastColored' : 'firstColored', segment.p1, segment.p2);
                 }
 
                 // If first/last white pixel
@@ -357,15 +357,15 @@ var lw = lw || {};
                     if (lastSegment.p1) {
                         if (segment.firstWhite) {
                             lastSegment.lastColored = true;
-                            console.warn('lastColored', lastSegment.p1, lastSegment.p2);
+                            //console.warn('lastColored', lastSegment.p1, lastSegment.p2);
                         }
                         else if (segment.lastWhite) {
                             lastSegment.firstColored = true;
-                            console.info('firstColored', lastSegment.p1, lastSegment.p2);
+                            //console.info('firstColored', lastSegment.p1, lastSegment.p2);
                         }
                     }
 
-                    console.log(even ? 'lastWhite' : 'firstWhite', segment.p1, segment.p2);
+                    //console.log(even ? 'lastWhite' : 'firstWhite', segment.p1, segment.p2);
                 }
 
                 // Store last segment
@@ -375,7 +375,7 @@ var lw = lw || {};
                 this.currentLine.addSegment(segment);
             }
 
-            console.log(this.currentLine);
+            //console.log(this.currentLine);
 
             // Process pixels line
             gcode = this.processCurrentLine();
