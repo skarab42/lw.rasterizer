@@ -238,7 +238,7 @@ var lw = lw || {};
         point = this.getPoint(index);
 
         // Move to start of the line
-        command = this.command(this.G0, ['X', point.X], ['Y', point.Y], ['S', point.S]);
+        command = this.command(this.G0, ['X', point.X], ['Y', point.Y], ['S', 0]);
         command && gcode.push(command);
 
         // For each point on the line
@@ -301,6 +301,41 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
+    // Join pixel with same power
+    lw.RasterizerParser.prototype.reduceCurrentLine = function() {
+        // Store the current line
+        var line = this.currentLine;
+
+        // Reset the current line
+        this.currentLine = [];
+
+        // Extract first point
+        var p2, p1 = line.shift();
+
+        // For each point on the line (exept last one)
+        while (line.length - 1) {
+            // Extract the point
+            p2 = line.shift();
+
+            // Same color as last one
+            if (p2.p === p1.p) {
+                continue;
+            }
+
+            // Push the points
+            this.currentLine.push(p1);
+            this.currentLine.push(p2);
+
+            // Store last point
+            p1 = p2;
+        }
+
+        // Push the last point in any case
+        this.currentLine.push(line.shift());
+    }
+
+    // -------------------------------------------------------------------------
+
     // Parse horizontally
     lw.RasterizerParser.prototype.parseHorizontally = function() {
         // Init loop vars
@@ -347,6 +382,11 @@ var lw = lw || {};
             // Trim trailing white spaces ?
             if (this.trimLine) {
                 this.trimCurrentLine();
+            }
+
+            // Join pixel with same power
+            if (this.joinPixel) {
+                this.reduceCurrentLine();
             }
 
             // Get last point object
