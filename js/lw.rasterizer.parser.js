@@ -193,40 +193,54 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
+    // Get a point from the current line with real world coordinates
+    lw.RasterizerParser.prototype.getPoint = function(index) {
+        // Get the point object from the current line
+        var point = this.currentLine[index];
+
+        // No more point
+        if (! point) {
+            return null;
+        }
+
+        // Commands
+        point.G = point.s ? ['G', 1] : this.G0;
+        point.X = (point.x * this.beamSize);
+        point.Y = (point.y * this.beamSize);
+        point.S = this.mapPixelPower(point.s);
+
+        // Vertical offset
+        point.Y += this.beamOffset;
+
+        // Return the point
+        return point;
+    };
+
+    // -------------------------------------------------------------------------
+
     // Process current line and return an array of GCode text lines
     lw.RasterizerParser.prototype.processCurrentLine = function() {
         // Point index
         var point, index = 0;
 
         // Init loop vars...
-        var G, X, Y, S, command, gcode = [];
+        var command, gcode = [];
 
         // Get first point
-        point = this.currentLine[index]
-
-        // Commands
-        X = (point.x * this.beamSize);
-        Y = (point.y * this.beamSize);
-        S = this.mapPixelPower(point.s);
+        point = this.getPoint(index);
 
         // Move to start of the line
-        command = this.command(this.G0, ['X', X], ['Y', Y], ['S', S]);
+        command = this.command(this.G0, ['X', point.X], ['Y', point.Y], ['S', point.S]);
         command && gcode.push(command);
 
         // For each point on the line
         while (point) {
-            // Commands
-            G = point.s ? ['G', 1] : this.G0;
-            X = (point.x * this.beamSize);
-            Y = (point.y * this.beamSize);
-            S = this.mapPixelPower(point.s);
-
-            // Burn to next pixel
-            command = this.command(G, ['X', X], ['Y', Y], ['S', S]);
+            // Burn to next point
+            command = this.command(point.G, ['X', point.X], ['Y', point.Y], ['S', point.S]);
             command && gcode.push(command);
 
             // Get next point
-            point = this.currentLine[++index];
+            point = this.getPoint(++index);
         }
 
         // Return gcode commands array
