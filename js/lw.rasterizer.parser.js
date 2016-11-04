@@ -212,6 +212,14 @@ var lw = lw || {};
         // Vertical offset
         point.Y += this.beamOffset;
 
+        // Horizontal offset
+        if (point.lastWhite || point.first) {
+            point.X += this.beamOffset;
+        }
+        else if (point.lastColored || point.last) {
+            point.X -= this.beamOffset;
+        }
+
         // Return the point
         return point;
     };
@@ -300,7 +308,9 @@ var lw = lw || {};
         var w = this.imageSize.width;
         var h = this.imageSize.height;
 
-        var reversed = false;
+        var reversed    = false;
+        var lastWhite   = false;
+        var lastColored = false;
 
         // For each image line
         for (y = 0; y < h; y++) {
@@ -315,13 +325,20 @@ var lw = lw || {};
                 // Get pixel power
                 s = p = this.getPixelPower(x, y);
 
+                // Last white/colored pixel
+                lastWhite   = point && (!point.s && s);
+                lastColored = point && (point.s && !s);
+
                 // Pixel color from last one on reversed line
                 if (! reversed && point) {
                     s = point.p;
                 }
 
                 // Create point object
-                point = { x: x, y: y, s: s, p: p };
+                point = {
+                    x: x, y: y, s: s, p: p,
+                    lastColored: lastColored, lastWhite: lastWhite
+                };
 
                 // Add point to current line
                 this.currentLine.push(point);
@@ -336,7 +353,10 @@ var lw = lw || {};
             point = this.currentLine[this.currentLine.length - 1];
 
             // Create and add trailing point from last point
-            this.currentLine.push({ x: point.x + 1, y: point.y, s: point.s });
+            this.currentLine.push({ x: point.x + 1, y: point.y, s: point.s, last: true });
+
+            // Mark first point
+            this.currentLine[0].first = true;
 
             // Reversed line ?
             if (reversed) {
