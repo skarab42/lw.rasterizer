@@ -152,12 +152,20 @@ var lw = lw || {};
     // -------------------------------------------------------------------------
 
     // Get a pixel power value from the canvas data grid
-    lw.RasterizerParser.prototype.getPixelPower = function(x, y, map) {
+    lw.RasterizerParser.prototype.getPixelPower = function(x, y, defaultValue) {
         if (x < 0 || x >= this.imageSize.width) {
+            if (defaultValue !== undefined) {
+                return defaultValue;
+            }
+
             throw new Error('Out of range: x = ' + x);
         }
 
         if (y < 0 || y >= this.imageSize.height) {
+            if (defaultValue !== undefined) {
+                return defaultValue;
+            }
+
             throw new Error('Out of range: y = ' + y);
         }
 
@@ -180,109 +188,45 @@ var lw = lw || {};
         var gray = 255 - ((data[i] + data[i + 1] + data[i + 2]) / 3);
 
         // Return pixel power
-        return map ? this.mapPixelPower(gray) : gray;
-    };
-
-    // -------------------------------------------------------------------------
-
-    lw.RasterizerParserLine = function(even) {
-        this.even     = !!even;
-        this.segments = [];
-        this.index    = -1;
-        this.length   = 0;
-    };
-
-    lw.RasterizerParserLine.prototype.addSegment = function(segment) {
-        this.segments[this.even ? 'unshift' : 'push'](segment);
-        this.length = this.segments.length;
-    };
-
-    lw.RasterizerParserLine.prototype.getSegment = function(index) {
-        return this.segments[index] || null;
-    };
-
-    lw.RasterizerParserLine.prototype.getNextSegment = function() {
-        return this.getSegment(++this.index) || null;
-    };
-
-    lw.RasterizerParserLine.prototype.rewind = function() {
-        this.index = -1;
-    };
-
-    // -------------------------------------------------------------------------
-
-    // Return point real world coordinates
-    lw.RasterizerParser.prototype.getPointCoords = function(point) {
-        // Real world segment coordinates
-        point.X = (point.x * this.beamSize);
-        point.Y = (point.y * this.beamSize);
-
-        // Return segment object
-        return point;
-    };
-
-    // Return point real world coordinates
-    lw.RasterizerParser.prototype.getNextSegment = function() {
-        // Get next segment
-        var line    = this.currentLine;
-        var segment = line.getNextSegment();
-
-        // No more segment
-        if (! segment) {
-            return null;
-        }
-
-        // G command depending on pixel power
-        segment.G = segment.s ? ['G', 1] : this.G0;
-
-        // Map s value
-        segment.S = this.mapPixelPower(segment.s);
-
-        // Real world segment coordinates
-        segment.p1 = this.getPointCoords(segment.p1);
-        segment.p2 = this.getPointCoords(segment.p2);
-
-        // Vertical offset
-        segment.p1.Y += this.beamOffset;
-        segment.p2.Y += this.beamOffset;
-
-        // Horizontal offset
-        if (segment.lastColored || segment.last) {
-            segment.p2.X += line.even ? this.beamOffset : -this.beamOffset;
-        }
-        else if (segment.lastWhite) {
-            segment.p2.X += line.even ? -this.beamOffset : this.beamOffset;
-        }
-        else if (segment.first) {
-            segment.p1.X += line.even ? -this.beamOffset : this.beamOffset;
-        }
-
-        // Return segment
-        return segment;
+        return gray;
     };
 
     // -------------------------------------------------------------------------
 
     // Process current line and return an array of GCode text lines
     lw.RasterizerParser.prototype.processCurrentLine = function() {
+        // Point index
+        var point, index = 0;
+
         // Init loop vars...
-        var command, gcode = [];
+        var G, X, Y, S, command, gcode = [];
 
-        // Get first segment
-        var segment = this.getNextSegment();
+        // Get first point
+        point = this.currentLine[index]
 
-        // Move to start of line (force S to 0)
-        command = this.command(this.G0, ['X', segment.p1.X], ['Y', segment.p1.Y], ['S', 0]);
+        // Commands
+        X = (point.x * this.beamSize);
+        Y = (point.y * this.beamSize);
+        S = this.mapPixelPower(point.s);
+
+        // Move to start of the line
+        command = this.command(this.G0, ['X', X], ['Y', Y], ['S', S]);
         command && gcode.push(command);
 
-        // For each segments on the line
-        while (segment) {
+        // For each point on the line
+        while (point) {
+            // Commands
+            G = point.s ? ['G', 1] : this.G0;
+            X = (point.x * this.beamSize);
+            Y = (point.y * this.beamSize);
+            S = this.mapPixelPower(point.s);
+
             // Burn to next pixel
-            command = this.command(segment.G, ['X', segment.p2.X], ['Y', segment.p2.Y], ['S', segment.S]);
+            command = this.command(G, ['X', X], ['Y', Y], ['S', S]);
             command && gcode.push(command);
 
-            // Get next segment
-            segment = this.getNextSegment();
+            // Get next point
+            point = this.currentLine[++index];
         }
 
         // Return gcode commands array
@@ -296,82 +240,93 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
+    // Remove all trailing white spaces from the current line
+    lw.RasterizerParser.prototype.trimCurrentLine = function() {
+        // Loop vars...
+        var i, il, j, start, end, done;
+
+        // For each point on the line (from the two ends)
+        for (i = 0, il = this.currentLine.length, j = il - 1; i < il ; i++, j--) {
+            // left --> right
+            if (start === undefined && this.currentLine[i].p) {
+                start = i;
+            }
+
+            // left <-- right
+            if (end === undefined && this.currentLine[j].p) {
+                end = j + 1;
+            }
+
+            // Start/End index found
+            if (start !== undefined && end !== undefined) {
+                done = true;
+                break;
+            }
+        }
+
+        // If done
+        if (done) {
+            // Slice the current line
+            this.currentLine = this.currentLine.slice(start, end);
+
+            // Return new line length
+            return this.currentLine.length;
+        }
+
+        // All white
+        return null;
+    };
+
+    // -------------------------------------------------------------------------
+
     // Parse horizontally
     lw.RasterizerParser.prototype.parseHorizontally = function() {
         // Init loop vars
-        var x, y, s, p1, p2, lastSegment, even, segment, gcode;
-
+        var x, y, s, p, point, gcode;
         var w = this.imageSize.width;
         var h = this.imageSize.height;
 
-        // For each pixels line
+        var reversed = false;
+
+        // For each image line
         for (y = 0; y < h; y++) {
-            // Create new parser line
-            this.currentLine = new lw.RasterizerParserLine(even);
+            // Reset current line
+            this.currentLine = [];
 
-            // reset s value
-            lastSegment = { s: 0 };
+            // Reset point object
+            point = null;
 
-            // For each pixel
+            // For each pixel on the line
             for (x = 0; x < w; x++) {
-                // Segment
-                p1 = { x: x, y: y };
-                p2 = { x: x + 1, y: y };
-
-                // Swap points on even line
-                if (even) {
-                    p2 = [p1, p1 = p2][0];
-                }
-
                 // Get pixel power
-                s = this.getPixelPower(x, y);
+                s = p = this.getPixelPower(x, y);
 
-                // Create pixel segment
-                segment = { p1: p1, p2: p2, s: s };
-
-                var type = segment.s ? 'Colored' : 'White';
-
-                // If first/last pixel
-                if (x === 0) {
-                    segment[even ? 'last' : 'first'] = true;
-                    segment[(segment.first ? 'first' : 'last') + type] = true;
-                }
-                else if (x === (w - 1)) {
-                    segment[even ? 'first' : 'last'] = true;
-                    segment[(segment.first ? 'first' : 'last') + type] = true;
-                }
-                // If first/last colored pixel
-                else if (lastSegment.s == 0 && segment.s > 0) {
-                    segment[even ? 'lastColored' : 'firstColored'] = true;
-
-                    if (lastSegment.p1) {
-                        if (segment.firstColored) {
-                            lastSegment.lastWhite = true;
-                        }
-                        else if (segment.lastColored) {
-                            lastSegment.firstWhite = true;
-                        }
-                    }
-                }
-                // If first/last white pixel
-                else if (lastSegment.s > 0 && segment.s == 0) {
-                    segment[even ? 'lastWhite' : 'firstWhite'] = true;
-
-                    if (lastSegment.p1) {
-                        if (segment.firstWhite) {
-                            lastSegment.lastColored = true;
-                        }
-                        else if (segment.lastWhite) {
-                            lastSegment.firstColored = true;
-                        }
-                    }
+                // Pixel color from last one on reversed line
+                if (! reversed && point) {
+                    s = point.p;
                 }
 
-                // Store last segment
-                lastSegment = segment;
+                // Create point object
+                point = { x: x, y: y, s: s, p: p };
 
-                // Add new line
-                this.currentLine.addSegment(segment);
+                // Add point to current line
+                this.currentLine.push(point);
+            }
+
+            // Trim trailing white spaces ?
+            if (this.trimLine) {
+                this.trimCurrentLine();
+            }
+
+            // Get last point object
+            point = this.currentLine[this.currentLine.length - 1];
+
+            // Create and add trailing point from last point
+            this.currentLine.push({ x: point.x + 1, y: point.y, s: point.s });
+
+            // Reversed line ?
+            if (reversed) {
+                this.currentLine = this.currentLine.reverse();
             }
 
             // Process pixels line
@@ -383,7 +338,7 @@ var lw = lw || {};
             }
 
             // Toggle line state
-            even = ! even;
+            reversed = ! reversed;
 
             // Post the gcode pixels line (only if not empty)
             postMessage({ type: 'gcode', data: {
