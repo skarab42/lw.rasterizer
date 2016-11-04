@@ -330,8 +330,10 @@ var lw = lw || {};
             p1 = p2;
         }
 
-        // Push the last point in any case
-        this.currentLine.push(line.shift());
+        // Push the last point(s) in any case
+        p2 = line.shift();
+        (p1 !== p2) && this.currentLine.push(p1);
+        this.currentLine.push(p2);
     }
 
     // -------------------------------------------------------------------------
