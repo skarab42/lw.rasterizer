@@ -209,15 +209,24 @@ var lw = lw || {};
         point.Y = (point.y * this.beamSize);
         point.S = this.mapPixelPower(point.s);
 
-        // Vertical offset
-        point.Y += this.beamOffset;
+        if (this.diagonal) {
+            // Vertical offset
+            point.Y += this.beamSize;
 
-        // Horizontal offset
-        if (point.lastWhite || point.first) {
-            point.X += this.beamOffset;
+            // Horizontal offset
+            //point.X += this.beamSize;
         }
-        else if (point.lastColored || point.last) {
-            point.X -= this.beamOffset;
+        else {
+            // Vertical offset
+            point.Y += this.beamOffset;
+
+            // Horizontal offset
+            if (point.lastWhite || point.first) {
+                point.X += this.beamOffset;
+            }
+            else if (point.lastColored || point.last) {
+                point.X -= this.beamOffset;
+            }
         }
 
         // Return the point
@@ -366,7 +375,7 @@ var lw = lw || {};
                 lastWhite   = point && (!point.s && s);
                 lastColored = point && (point.s && !s);
 
-                // Pixel color from last one on reversed line
+                // Pixel color from last one on normal line
                 if (! reversed && point) {
                     s = point.p;
                 }
@@ -382,8 +391,9 @@ var lw = lw || {};
             }
 
             // Trim trailing white spaces ?
-            if (this.trimLine) {
-                this.trimCurrentLine();
+            if (this.trimLine && ! this.trimCurrentLine()) {
+                // Empty line ?
+                continue;
             }
 
             // Join pixel with same power
@@ -391,14 +401,14 @@ var lw = lw || {};
                 this.reduceCurrentLine();
             }
 
+            // Mark first point
+            this.currentLine[0].first = true;
+
             // Get last point object
             point = this.currentLine[this.currentLine.length - 1];
 
             // Create and add trailing point from last point
-            this.currentLine.push({ x: point.x + 1, y: point.y, s: point.s, last: true });
-
-            // Mark first point
-            this.currentLine[0].first = true;
+            this.currentLine.push({ x: point.x + 1, y: point.y, s: point.p, last: true });
 
             // Reversed line ?
             if (reversed) {
@@ -428,7 +438,118 @@ var lw = lw || {};
 
     // Parse diagonally
     lw.RasterizerParser.prototype.parseDiagonally = function() {
+        // Init loop vars
+        var s, p, point, gcode;
+        var w = this.imageSize.width;
+        var h = this.imageSize.height;
 
+        var limit = Math.min(w, h);
+
+        var y = 0;
+        var x = 0;
+
+        var self        = this;
+        var reversed    = false;
+        var lastWhite   = false;
+        var lastColored = false;
+
+        function parseDiagonalLine(x, y, limit) {
+            // Reset current line
+            self.currentLine = [];
+
+            // Reset point object
+            point = null;
+
+            while(limit--) {
+                // Y limit reached !
+                if (y < 0 || y == h) {
+                    break;
+                }
+
+                // X limit reached !
+                if (x < 0 || x == w) {
+                    break;
+                }
+
+                // Get pixel power
+                s = p = self.getPixelPower(x, y);
+
+                // Last white/colored pixel
+                lastWhite   = point && (!point.s && s);
+                lastColored = point && (point.s && !s);
+
+                // Pixel color from last one on normal line
+                if (! reversed && point) {
+                    s = point.p;
+                }
+
+                // Create point object
+                point = {
+                    x: x, y: y, s: s, p: p,
+                    lastColored: lastColored, lastWhite: lastWhite
+                };
+
+                // Add the new point
+                self.currentLine.push(point);
+
+                // Next coords
+                x++; y--;
+            }
+
+            // Trim trailing white spaces ?
+            if (self.trimLine && ! self.trimCurrentLine()) {
+                // Empty line ?
+                return;
+            }
+
+            // Join pixel with same power
+            if (self.joinPixel) {
+                self.reduceCurrentLine();
+            }
+
+            // Mark first point
+            self.currentLine[0].first = true;
+
+            // Get last point object
+            point = self.currentLine[self.currentLine.length - 1];
+
+            // Create and add trailing point from last point
+            self.currentLine.push({ x: point.x + 1, y: point.y - 1, s: point.p, last: true });
+
+            // Reversed line ?
+            if (reversed) {
+                self.currentLine = self.currentLine.reverse();
+            }
+
+            // Process pixels line
+            gcode = self.processCurrentLine();
+
+            // Skip empty gcode line
+            if (! gcode) {
+                return;
+            }
+
+            // Toggle line state
+            reversed = ! reversed;
+
+            // Post the gcode pixels line (only if not empty)
+            postMessage({ type: 'gcode', data: {
+                percent: Math.round((y / h) * 100),
+                text   : gcode.join('\n')
+            }});
+        }
+
+        // For each image line
+        for (y = 0; y < h; y++) {
+            // Line length
+            parseDiagonalLine(x, y, limit);
+        }
+
+        // For each image column (exept the first one)
+        for (x = 1, y--; x < w; x++) {
+            // Line length
+            parseDiagonalLine(x, y, limit);
+        }
     };
 
     // -------------------------------------------------------------------------
