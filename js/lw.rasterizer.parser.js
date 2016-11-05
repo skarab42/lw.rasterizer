@@ -396,11 +396,6 @@ var lw = lw || {};
                 continue;
             }
 
-            // Join pixel with same power
-            if (this.joinPixel) {
-                this.reduceCurrentLine();
-            }
-
             // Mark first point
             this.currentLine[0].first = true;
 
@@ -409,6 +404,11 @@ var lw = lw || {};
 
             // Create and add trailing point from last point
             this.currentLine.push({ x: point.x + 1, y: point.y, s: point.p, last: true });
+
+            // Join pixel with same power
+            if (this.joinPixel) {
+                this.reduceCurrentLine();
+            }
 
             // Reversed line ?
             if (reversed) {
@@ -502,11 +502,6 @@ var lw = lw || {};
                 return;
             }
 
-            // Join pixel with same power
-            if (self.joinPixel) {
-                self.reduceCurrentLine();
-            }
-
             // Mark first point
             self.currentLine[0].first = true;
 
@@ -515,6 +510,11 @@ var lw = lw || {};
 
             // Create and add trailing point from last point
             self.currentLine.push({ x: point.x + 1, y: point.y - 1, s: point.p, last: true });
+
+            // Join pixel with same power
+            if (self.joinPixel) {
+                self.reduceCurrentLine();
+            }
 
             // Reversed line ?
             if (reversed) {
