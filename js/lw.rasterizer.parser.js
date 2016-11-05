@@ -236,7 +236,39 @@ var lw = lw || {};
     // -------------------------------------------------------------------------
 
     // Process current line and return an array of GCode text lines
-    lw.RasterizerParser.prototype.processCurrentLine = function() {
+    lw.RasterizerParser.prototype.processCurrentLine = function(reversed) {
+        // Trim trailing white spaces ?
+        if (this.trimLine && ! this.trimCurrentLine()) {
+            // Empty line ?
+            return null;
+        }
+
+        // Mark first point
+        this.currentLine[0].first = true;
+
+        // Get last point object
+        point = this.currentLine[this.currentLine.length - 1];
+
+        // Increment coords
+        point.x += 1;
+
+        if (this.diagonal) {
+            point.y -= 1;
+        }
+
+        // Create and add trailing point from last point
+        this.currentLine.push({ x: point.x, y: point.y, s: point.p, last: true });
+
+        // Join pixel with same power
+        if (this.joinPixel) {
+            this.reduceCurrentLine();
+        }
+
+        // Reversed line ?
+        if (reversed) {
+            this.currentLine = this.currentLine.reverse();
+        }
+
         // Point index
         var point, index = 0;
 
@@ -390,33 +422,8 @@ var lw = lw || {};
                 this.currentLine.push(point);
             }
 
-            // Trim trailing white spaces ?
-            if (this.trimLine && ! this.trimCurrentLine()) {
-                // Empty line ?
-                continue;
-            }
-
-            // Mark first point
-            this.currentLine[0].first = true;
-
-            // Get last point object
-            point = this.currentLine[this.currentLine.length - 1];
-
-            // Create and add trailing point from last point
-            this.currentLine.push({ x: point.x + 1, y: point.y, s: point.p, last: true });
-
-            // Join pixel with same power
-            if (this.joinPixel) {
-                this.reduceCurrentLine();
-            }
-
-            // Reversed line ?
-            if (reversed) {
-                this.currentLine = this.currentLine.reverse();
-            }
-
             // Process pixels line
-            gcode = this.processCurrentLine();
+            gcode = this.processCurrentLine(reversed);
 
             // Skip empty gcode line
             if (! gcode) {
@@ -502,27 +509,8 @@ var lw = lw || {};
                 return;
             }
 
-            // Mark first point
-            self.currentLine[0].first = true;
-
-            // Get last point object
-            point = self.currentLine[self.currentLine.length - 1];
-
-            // Create and add trailing point from last point
-            self.currentLine.push({ x: point.x + 1, y: point.y - 1, s: point.p, last: true });
-
-            // Join pixel with same power
-            if (self.joinPixel) {
-                self.reduceCurrentLine();
-            }
-
-            // Reversed line ?
-            if (reversed) {
-                self.currentLine = self.currentLine.reverse();
-            }
-
             // Process pixels line
-            gcode = self.processCurrentLine();
+            gcode = self.processCurrentLine(reversed);
 
             // Skip empty gcode line
             if (! gcode) {
