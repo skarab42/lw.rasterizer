@@ -247,15 +247,41 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
+    // Remove all trailing white spaces from the current line
+    lw.RasterizerParser.prototype.trimCurrentLine = function() {
+        // Remove white spaces from the left
+        var point = this.currentLine[0];
+
+        while (point && ! point.p) {
+            this.currentLine.shift();
+            point = this.currentLine[0];
+        }
+
+        // Remove white spaces from the right
+        point = this.currentLine[this.currentLine.length - 2];
+
+        while (point && ! point.p) {
+            this.currentLine.pop();
+            point = this.currentLine[this.currentLine.length - 2];
+        }
+
+        // Return the new line length
+        return this.currentLine.length;
+    };
+
+    // -------------------------------------------------------------------------
+
     // Process current line and return an array of GCode text lines
     lw.RasterizerParser.prototype.processCurrentLine = function(reversed) {
-        // Get first and last point
-        var firstPoint = this.currentLine[0];
-        var lastPoint  = this.currentLine[this.currentLine.length - 1];
+        // Trim trailing white spaces ?
+        if (this.trimLine && ! this.trimCurrentLine()) {
+            // Skip empty line
+            return null;
+        }
 
-        // Mark first and last point
-        firstPoint.first = true;
-        lastPoint.last   = true;
+        // Mark first and last point on the current line
+        this.currentLine[0].first = true;
+        this.currentLine[this.currentLine.length - 1].last = true;
 
         // Reversed line ?
         if (reversed) {
