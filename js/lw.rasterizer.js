@@ -37,6 +37,7 @@ var lw = lw || {};
             verboseG : true,                 // Output verbose GCode (print each commands)
             diagonal : false,                // Go diagonally (increase the distance between pixels)
             precision: { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
+            offsets  : { X: 0, Y: 0 },       // Global coordinates offsets
             accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
             onError  : null,
             onFile   : null,

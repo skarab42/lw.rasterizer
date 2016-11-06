@@ -207,8 +207,8 @@ var lw = lw || {};
 
         // Commands
         point.G = point.s ? ['G', 1] : this.G0;
-        point.X = (point.x * this.beamSize);
-        point.Y = (point.y * this.beamSize);
+        point.X = (point.x * this.beamSize) + this.offsets.X;
+        point.Y = (point.y * this.beamSize) + this.offsets.Y;
         point.S = this.mapPixelPower(point.s);
 
         // Offsets

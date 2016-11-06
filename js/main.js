@@ -13,6 +13,7 @@ var settings = {
     verboseG : true,                 // Output verbose GCode (print each commands)
     diagonal : false,                // Go diagonally (increase the distance between pixels)
     precision: { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
+    offsets  : { X: 0, Y: 0 },       // Global coordinates offsets
     accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
     onError  : onError,
     onFile   : onFile,
@@ -51,7 +52,8 @@ function storeSettings() {
         joinPixel: rasterizer.settings.joinPixel,
         burnWhite: rasterizer.settings.burnWhite,
         verboseG : rasterizer.settings.verboseG,
-        diagonal : rasterizer.settings.diagonal
+        diagonal : rasterizer.settings.diagonal,
+        offsets  : rasterizer.settings.offsets
     }));
 }
 
@@ -151,6 +153,8 @@ var joinPixelCheckbox = document.querySelector('#joinPixelCheckbox');
 var burnWhiteCheckbox = document.querySelector('#burnWhiteCheckbox');
 var verboseGCheckbox  = document.querySelector('#verboseGCheckbox');
 var diagonalCheckbox  = document.querySelector('#diagonalCheckbox');
+var offsetsXInput     = document.querySelector('#offsetsXInput');
+var offsetsYInput     = document.querySelector('#offsetsYInput');
 
 var fileInfo        = document.querySelector('#fileInfo');
 var fileName        = fileInfo.querySelector('.name');
@@ -178,6 +182,8 @@ beamPowerMinInput.value       = rasterizer.settings.beamPower.min;
 beamPowerMaxInput.value       = rasterizer.settings.beamPower.max;
 beamRangeMinInput.value       = rasterizer.settings.beamRange.min;
 beamRangeMaxInput.value       = rasterizer.settings.beamRange.max;
+offsetsXInput.value           = rasterizer.settings.offsets.X;
+offsetsYInput.value           = rasterizer.settings.offsets.Y;
 feedRateInput.value           = rasterizer.settings.feedRate;
 fileInput.accept              = rasterizer.settings.accept.join(', ');
 fileInput.title               = fileInput.accept;
@@ -202,6 +208,8 @@ function refreshSettings() {
     rasterizer.settings.beamPower.max = Number(beamPowerMaxInput.value);
     rasterizer.settings.beamRange.min = Number(beamRangeMinInput.value);
     rasterizer.settings.beamRange.max = Number(beamRangeMaxInput.value);
+    rasterizer.settings.offsets.X     = Number(offsetsXInput.value);
+    rasterizer.settings.offsets.Y     = Number(offsetsYInput.value);
     rasterizer.settings.feedRate      = Number(feedRateInput.value);
     storeSettings();
 }
@@ -215,19 +223,21 @@ function refresh() {
 }
 
 // UI actions
-ppiInput.addEventListener('change'         , refresh, false);
-beamSizeInput.addEventListener('change'    , refresh, false);
+ppiInput.addEventListener(         'change', refresh, false);
+beamSizeInput.addEventListener(    'change', refresh, false);
 smoothingCheckbox.addEventListener('change', refresh, false);
-trimLineCheckbox.addEventListener('change' , refresh, false);
+trimLineCheckbox.addEventListener( 'change', refresh, false);
 joinPixelCheckbox.addEventListener('change', refresh, false);
 burnWhiteCheckbox.addEventListener('change', refresh, false);
-verboseGCheckbox.addEventListener('change' , refresh, false);
-diagonalCheckbox.addEventListener('change' , refresh, false);
+verboseGCheckbox.addEventListener( 'change', refresh, false);
+diagonalCheckbox.addEventListener( 'change', refresh, false);
 beamPowerMinInput.addEventListener('change', refreshSettings, false);
 beamPowerMaxInput.addEventListener('change', refreshSettings, false);
 beamRangeMinInput.addEventListener('change', refreshSettings, false);
 beamRangeMaxInput.addEventListener('change', refreshSettings, false);
-feedRateInput.addEventListener('change'    , refreshSettings, false);
+offsetsXInput.addEventListener(    'change', refreshSettings, false);
+offsetsYInput.addEventListener(    'change', refreshSettings, false);
+feedRateInput.addEventListener(    'change', refreshSettings, false);
 
 fileInput.addEventListener('change', function(e) {
     if (fileInput.files.length) {
