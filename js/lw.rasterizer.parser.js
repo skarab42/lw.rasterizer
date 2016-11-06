@@ -219,11 +219,11 @@ var lw = lw || {};
             point.Y += this.beamSize;
 
             // Horizontal offset
-            if (point.first) {
+            if (point.first || point.lastWhite) {
                 point.X += this.beamOffset2;
                 point.Y -= this.beamOffset2;
             }
-            else if (point.last) {
+            else if (point.last || point.lastColored) {
                 point.X -= this.beamOffset2;
                 point.Y += this.beamOffset2;
             }
@@ -233,10 +233,10 @@ var lw = lw || {};
             point.Y += this.beamOffset;
 
             // Horizontal offset
-            if (point.first) {
+            if (point.first || point.lastWhite) {
                 point.X += this.beamOffset;
             }
-            else if (point.last) {
+            else if (point.last || point.lastColored) {
                 point.X -= this.beamOffset;
             }
         }
@@ -329,7 +329,9 @@ var lw = lw || {};
         var w = this.imageSize.width;
         var h = this.imageSize.height;
 
-        var reversed = false;
+        var reversed    = false;
+        var lastWhite   = false;
+        var lastColored = false;
 
         // For each image line
         for (y = 0; y < h; y++) {
@@ -344,13 +346,15 @@ var lw = lw || {};
                 // Get pixel power
                 s = p = this.getPixelPower(x, y, p);
 
+                // Last white/colored pixel
+
                 // Pixel color from last one on normal line
                 if (! reversed && point) {
                     s = point.p;
                 }
 
                 // Create point object
-                point = { x: x, y: y, s: s, p: p };
+                point = { x: x, y: y, s: s, p: p, lastColored: lastColored, lastWhite: lastWhite };
 
                 // Add point to current line
                 this.currentLine.push(point);
@@ -385,10 +389,12 @@ var lw = lw || {};
         var w = this.imageSize.width;
         var h = this.imageSize.height;
 
-        var totalLines = w + h - 1;
-        var lineNum    = 0;
-        var reversed   = false;
-        var self       = this;
+        var totalLines  = w + h - 1;
+        var lineNum     = 0;
+        var reversed    = false;
+        var lastWhite   = false;
+        var lastColored = false;
+        var self        = this;
 
         function parseDiagonalLine(x, y) {
             // Reset current line
@@ -414,13 +420,15 @@ var lw = lw || {};
                 // Get pixel power
                 s = p = self.getPixelPower(x, y, p);
 
+                // Last white/colored pixel
+
                 // Pixel color from last one on normal line
                 if (! reversed && point) {
                     s = point.p;
                 }
 
                 // Create point object
-                point = { x: x, y: y, s: s, p: p };
+                point = { x: x, y: y, s: s, p: p, lastColored: lastColored, lastWhite: lastWhite };
 
                 // Add the new point
                 self.currentLine.push(point);
