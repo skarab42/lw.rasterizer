@@ -13,6 +13,8 @@ var lw = lw || {};
         this.currentLine  = null;
         this.lastCommands = null;
         this.beamOffset   = null;
+        this.beamOffset2  = null;
+        this.G1           = null;
         this.G0           = null;
     };
 
@@ -30,10 +32,12 @@ var lw = lw || {};
         }
 
         // G0 command
+        this.G1 = ['G', 1];
         this.G0 = ['G', this.burnWhite ? 1 : 0];
 
         // Calculate beam offset
-        this.beamOffset = this.beamSize * 1000 / 2000;
+        this.beamOffset  = this.beamSize * 1000 / 2000;
+        this.beamOffset2 = this.beamOffset / Math.sqrt(2);
 
         // Calculate real beam range
         this.beamRange.min = this.beamRange.max / 100 * this.beamPower.min;
@@ -198,7 +202,7 @@ var lw = lw || {};
         // Get the point object from the current line
         var point = this.currentLine[index];
 
-        // No more point
+        // No point
         if (! point) {
             return null;
         }
@@ -209,22 +213,30 @@ var lw = lw || {};
         point.Y = (point.y * this.beamSize);
         point.S = this.mapPixelPower(point.s);
 
+        // Offsets
         if (this.diagonal) {
             // Vertical offset
             point.Y += this.beamSize;
 
             // Horizontal offset
-            //point.X += this.beamSize;
+            if (point.first) {
+                point.X += this.beamOffset2;
+                point.Y -= this.beamOffset2;
+            }
+            else if (point.last) {
+                point.X -= this.beamOffset2;
+                point.Y += this.beamOffset2;
+            }
         }
         else {
             // Vertical offset
             point.Y += this.beamOffset;
 
             // Horizontal offset
-            if (point.lastWhite || point.first) {
+            if (point.first) {
                 point.X += this.beamOffset;
             }
-            else if (point.lastColored || point.last) {
+            else if (point.last) {
                 point.X -= this.beamOffset;
             }
         }
@@ -237,32 +249,13 @@ var lw = lw || {};
 
     // Process current line and return an array of GCode text lines
     lw.RasterizerParser.prototype.processCurrentLine = function(reversed) {
-        // Trim trailing white spaces ?
-        if (this.trimLine && ! this.trimCurrentLine()) {
-            // Empty line ?
-            return null;
-        }
+        // Get first and last point
+        var firstPoint = this.currentLine[0];
+        var lastPoint  = this.currentLine[this.currentLine.length - 1];
 
-        // Mark first point
-        this.currentLine[0].first = true;
-
-        // Get last point object
-        point = this.currentLine[this.currentLine.length - 1];
-
-        // Increment coords
-        point.x += 1;
-
-        if (this.diagonal) {
-            point.y -= 1;
-        }
-
-        // Create and add trailing point from last point
-        this.currentLine.push({ x: point.x, y: point.y, s: point.p, last: true });
-
-        // Join pixel with same power
-        if (this.joinPixel) {
-            this.reduceCurrentLine();
-        }
+        // Mark first and last point
+        firstPoint.first = true;
+        lastPoint.last   = true;
 
         // Reversed line ?
         if (reversed) {
@@ -303,82 +296,6 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
-    // Remove all trailing white spaces from the current line
-    lw.RasterizerParser.prototype.trimCurrentLine = function() {
-        // Loop vars...
-        var i, il, j, start, end, done;
-
-        // For each point on the line (from the two ends)
-        for (i = 0, il = this.currentLine.length, j = il - 1; i < il ; i++, j--) {
-            // left --> right
-            if (start === undefined && this.currentLine[i].p) {
-                start = i;
-            }
-
-            // left <-- right
-            if (end === undefined && this.currentLine[j].p) {
-                end = j + 1;
-            }
-
-            // Start/End index found
-            if (start !== undefined && end !== undefined) {
-                done = true;
-                break;
-            }
-        }
-
-        // If done
-        if (done) {
-            // Slice the current line
-            this.currentLine = this.currentLine.slice(start, end);
-
-            // Return new line length
-            return this.currentLine.length;
-        }
-
-        // All white
-        return null;
-    };
-
-    // -------------------------------------------------------------------------
-
-    // Join pixel with same power
-    lw.RasterizerParser.prototype.reduceCurrentLine = function() {
-        // Store the current line
-        var line = this.currentLine;
-
-        // Reset the current line
-        this.currentLine = [];
-
-        // Extract first point
-        var p2, p1 = line.shift();
-
-        // For each point on the line (exept last one)
-        while (line.length - 1) {
-            // Extract the point
-            p2 = line.shift();
-
-            // Same color as last one
-            if (p2.p === p1.p) {
-                continue;
-            }
-
-            // Push the points
-            this.currentLine.push(p1);
-            this.currentLine.push(p2);
-
-            // Store last point
-            p1 = p2;
-        }
-
-        // Push the last point(s) in any case
-        p2 = line.shift();
-        (p1 !== p2) && this.currentLine.push(p1);
-        this.currentLine.push(p2);
-    }
-
-    // -------------------------------------------------------------------------
-
     // Parse horizontally
     lw.RasterizerParser.prototype.parseHorizontally = function() {
         // Init loop vars
@@ -386,9 +303,7 @@ var lw = lw || {};
         var w = this.imageSize.width;
         var h = this.imageSize.height;
 
-        var reversed    = false;
-        var lastWhite   = false;
-        var lastColored = false;
+        var reversed = false;
 
         // For each image line
         for (y = 0; y < h; y++) {
@@ -399,13 +314,9 @@ var lw = lw || {};
             point = null;
 
             // For each pixel on the line
-            for (x = 0; x < w; x++) {
+            for (x = 0; x <= w; x++) {
                 // Get pixel power
-                s = p = this.getPixelPower(x, y);
-
-                // Last white/colored pixel
-                lastWhite   = point && (!point.s && s);
-                lastColored = point && (point.s && !s);
+                s = p = this.getPixelPower(x, y, p);
 
                 // Pixel color from last one on normal line
                 if (! reversed && point) {
@@ -413,10 +324,7 @@ var lw = lw || {};
                 }
 
                 // Create point object
-                point = {
-                    x: x, y: y, s: s, p: p,
-                    lastColored: lastColored, lastWhite: lastWhite
-                };
+                point = { x: x, y: y, s: s, p: p };
 
                 // Add point to current line
                 this.currentLine.push(point);
@@ -446,44 +354,39 @@ var lw = lw || {};
     // Parse diagonally
     lw.RasterizerParser.prototype.parseDiagonally = function() {
         // Init loop vars
+        var x = 0, y = 0;
         var s, p, point, gcode;
         var w = this.imageSize.width;
         var h = this.imageSize.height;
 
-        var limit = Math.min(w, h);
+        var totalLines = w + h - 1;
+        var lineNum    = 0;
+        var reversed   = false;
+        var self       = this;
 
-        var y = 0;
-        var x = 0;
-
-        var self        = this;
-        var reversed    = false;
-        var lastWhite   = false;
-        var lastColored = false;
-
-        function parseDiagonalLine(x, y, limit) {
+        function parseDiagonalLine(x, y) {
             // Reset current line
             self.currentLine = [];
 
             // Reset point object
             point = null;
 
-            while(limit--) {
+            // Increment line num
+            lineNum++;
+
+            while(true) {
                 // Y limit reached !
-                if (y < 0 || y == h) {
+                if (y < -1 || y == h) {
                     break;
                 }
 
                 // X limit reached !
-                if (x < 0 || x == w) {
+                if (x < 0 || x > w) {
                     break;
                 }
 
                 // Get pixel power
-                s = p = self.getPixelPower(x, y);
-
-                // Last white/colored pixel
-                lastWhite   = point && (!point.s && s);
-                lastColored = point && (point.s && !s);
+                s = p = self.getPixelPower(x, y, p);
 
                 // Pixel color from last one on normal line
                 if (! reversed && point) {
@@ -491,22 +394,13 @@ var lw = lw || {};
                 }
 
                 // Create point object
-                point = {
-                    x: x, y: y, s: s, p: p,
-                    lastColored: lastColored, lastWhite: lastWhite
-                };
+                point = { x: x, y: y, s: s, p: p };
 
                 // Add the new point
                 self.currentLine.push(point);
 
                 // Next coords
                 x++; y--;
-            }
-
-            // Trim trailing white spaces ?
-            if (self.trimLine && ! self.trimCurrentLine()) {
-                // Empty line ?
-                return;
             }
 
             // Process pixels line
@@ -522,21 +416,19 @@ var lw = lw || {};
 
             // Post the gcode pixels line (only if not empty)
             postMessage({ type: 'gcode', data: {
-                percent: Math.round((y / h) * 100),
+                percent: Math.round((lineNum / totalLines) * 100),
                 text   : gcode.join('\n')
             }});
         }
 
         // For each image line
         for (y = 0; y < h; y++) {
-            // Line length
-            parseDiagonalLine(x, y, limit);
+            parseDiagonalLine(x, y);
         }
 
         // For each image column (exept the first one)
         for (x = 1, y--; x < w; x++) {
-            // Line length
-            parseDiagonalLine(x, y, limit);
+            parseDiagonalLine(x, y);
         }
     };
 
