@@ -271,12 +271,44 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
+    // Join pixel with same power
+    lw.RasterizerParser.prototype.reduceCurrentLine = function(reversed) {
+        // Line too short to be reduced
+        if (this.currentLine.length < 3) {
+            return this.currentLine.length;
+        }
+
+        // Extract all points exept the first one
+        var points = this.currentLine.splice(1);
+
+        // For each extracted point
+        for (var point, i = 0, il = points.length - 1; i < il; i++) {
+            // Current point
+            point = points[i];
+
+            // If the last white/colored point
+            if (point.lastColored || point.lastWhite) {
+                this.currentLine.push(point);
+            }
+        }
+
+        // Add last point
+        this.currentLine.push(points[i]);
+    };
+
+    // -------------------------------------------------------------------------
+
     // Process current line and return an array of GCode text lines
     lw.RasterizerParser.prototype.processCurrentLine = function(reversed) {
         // Trim trailing white spaces ?
         if (this.trimLine && ! this.trimCurrentLine()) {
             // Skip empty line
             return null;
+        }
+
+        // Join pixel with same power
+        if (this.joinPixel) {
+            this.reduceCurrentLine(reversed);
         }
 
         // Mark first and last point on the current line
@@ -346,9 +378,9 @@ var lw = lw || {};
                 // Get pixel power
                 s = p = this.getPixelPower(x, y, p);
 
-                // Last white/colored pixel
-                lastWhite   = point && (!point.p && p);
-                lastColored = point && (point.p && !p);
+                // Is last white/colored pixel
+                lastWhite   = point && ! point.p && p;
+                lastColored = point && point.p && ! p;
 
                 // Pixel color from last one on normal line
                 if (! reversed && point) {
@@ -356,7 +388,11 @@ var lw = lw || {};
                 }
 
                 // Create point object
-                point = { x: x, y: y, s: s, p: p, lastColored: lastColored, lastWhite: lastWhite };
+                point = { x: x, y: y, s: s, p: p };
+
+                // Set last white/colored pixel
+                lastWhite   && (point.lastWhite   = true);
+                lastColored && (point.lastColored = true);
 
                 // Add point to current line
                 this.currentLine.push(point);
@@ -422,9 +458,9 @@ var lw = lw || {};
                 // Get pixel power
                 s = p = self.getPixelPower(x, y, p);
 
-                // Last white/colored pixel
-                lastWhite   = point && (!point.p && p);
-                lastColored = point && (point.p && !p);
+                // Is last white/colored pixel
+                lastWhite   = point && (! point.p && p);
+                lastColored = point && (point.p && ! p);
 
                 // Pixel color from last one on normal line
                 if (! reversed && point) {
@@ -432,7 +468,11 @@ var lw = lw || {};
                 }
 
                 // Create point object
-                point = { x: x, y: y, s: s, p: p, lastColored: lastColored, lastWhite: lastWhite };
+                point = { x: x, y: y, s: s, p: p };
+
+                // Set last white/colored pixel
+                lastWhite   && (point.lastWhite   = true);
+                lastColored && (point.lastColored = true);
 
                 // Add the new point
                 self.currentLine.push(point);
