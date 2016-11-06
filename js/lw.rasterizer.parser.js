@@ -347,6 +347,8 @@ var lw = lw || {};
                 s = p = this.getPixelPower(x, y, p);
 
                 // Last white/colored pixel
+                lastWhite   = point && (!point.p && p);
+                lastColored = point && (point.p && !p);
 
                 // Pixel color from last one on normal line
                 if (! reversed && point) {
@@ -421,6 +423,8 @@ var lw = lw || {};
                 s = p = self.getPixelPower(x, y, p);
 
                 // Last white/colored pixel
+                lastWhite   = point && (!point.p && p);
+                lastColored = point && (point.p && !p);
 
                 // Pixel color from last one on normal line
                 if (! reversed && point) {
