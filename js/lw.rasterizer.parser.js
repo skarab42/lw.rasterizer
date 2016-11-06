@@ -13,7 +13,6 @@ var lw = lw || {};
         this.currentLine  = null;
         this.lastCommands = null;
         this.beamOffset   = null;
-        this.beamOffset2  = null;
         this.G1           = null;
         this.G0           = null;
     };
@@ -36,8 +35,7 @@ var lw = lw || {};
         this.G0 = ['G', this.burnWhite ? 1 : 0];
 
         // Calculate beam offset
-        this.beamOffset  = this.beamSize * 1000 / 2000;
-        this.beamOffset2 = this.beamOffset / Math.sqrt(2);
+        this.beamOffset = this.beamSize * 1000 / 2000;
 
         // Calculate real beam range
         this.beamRange.min = this.beamRange.max / 100 * this.beamPower.min;
@@ -220,12 +218,12 @@ var lw = lw || {};
 
             // Horizontal offset
             if (point.first || point.lastWhite) {
-                point.X += this.beamOffset2;
-                point.Y -= this.beamOffset2;
+                point.X += this.beamOffset;
+                point.Y -= this.beamOffset;
             }
             else if (point.last || point.lastColored) {
-                point.X -= this.beamOffset2;
-                point.Y += this.beamOffset2;
+                point.X -= this.beamOffset;
+                point.Y += this.beamOffset;
             }
         }
         else {
