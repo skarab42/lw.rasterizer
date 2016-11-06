@@ -279,15 +279,21 @@ var lw = lw || {};
         // Extract all points exept the first one
         var points = this.currentLine.splice(1);
 
+        // Get current power
+        var power = this.currentLine[0].p;
+
         // For each extracted point
         for (var point, i = 0, il = points.length - 1; i < il; i++) {
             // Current point
             point = points[i];
 
-            // If the last white/colored point
-            if (point.lastColored || point.lastWhite) {
+            // On power change
+            if (power !== point.p) {
                 this.currentLine.push(point);
             }
+
+            // Update power
+            power = point.p;
         }
 
         // Add last point
