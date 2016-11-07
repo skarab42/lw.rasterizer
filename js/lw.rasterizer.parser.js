@@ -270,7 +270,7 @@ var lw = lw || {};
     // -------------------------------------------------------------------------
 
     // Join pixel with same power
-    lw.RasterizerParser.prototype.reduceCurrentLine = function(reversed) {
+    lw.RasterizerParser.prototype.reduceCurrentLine = function() {
         // Line too short to be reduced
         if (this.currentLine.length < 3) {
             return this.currentLine.length;
@@ -302,6 +302,38 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
+    // Add extra white pixels at the ends
+    lw.RasterizerParser.prototype.overscanCurrentLine = function(reversed) {
+        // Number of pixels to add on each side
+        var pixels = this.overscan / this.ppm;
+
+        // Get first/last point
+        var firstPoint = this.currentLine[0];
+        var lastPoint  = this.currentLine[this.currentLine.length - 1];
+
+        // Is last white/colored point ?
+        firstPoint.s && (firstPoint.lastWhite  = true);
+        lastPoint.s  && (lastPoint.lastColored = true);
+
+        // Reversed line ?
+        reversed ? (lastPoint.s = 0) : (firstPoint.s = 0);
+
+        // Create left/right points
+        var rightPoint = { x: lastPoint.x + pixels , y: lastPoint.y , s: 0, p: 0 };
+        var leftPoint  = { x: firstPoint.x - pixels, y: firstPoint.y, s: 0, p: 0 };
+
+        if (this.diagonal) {
+            leftPoint.y  += pixels;
+            rightPoint.y -= pixels;
+        }
+
+        // Add left/right points to current line
+        this.currentLine.unshift(leftPoint);
+        this.currentLine.push(rightPoint);
+    };
+
+    // -------------------------------------------------------------------------
+
     // Process current line and return an array of GCode text lines
     lw.RasterizerParser.prototype.processCurrentLine = function(reversed) {
         // Trim trailing white spaces ?
@@ -312,7 +344,12 @@ var lw = lw || {};
 
         // Join pixel with same power
         if (this.joinPixel) {
-            this.reduceCurrentLine(reversed);
+            this.reduceCurrentLine();
+        }
+
+        // Overscan ?
+        if (this.overscan) {
+            this.overscanCurrentLine(reversed);
         }
 
         // Mark first and last point on the current line

@@ -1,17 +1,18 @@
 // Defaults settings
 var settings = {
-    baseUrl  : 'js/',                // Relative url to worker
+    baseUrl  : 'js/',                // Relative url to worker with trailing slash
     ppi      : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
     smoothing: false,                // Smoothing the input image ?
     beamSize : 0.1,                  // Beam size in millimeters
     beamRange: { min: 0, max: 1 },   // Beam power range (Firmware value)
     beamPower: { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
     feedRate : 1500,                 // Feed rate in mm/min (F value)
+    overscan : 0,                    // Overscan in millimeters
     trimLine : true,                 // Trim trailing white pixels
-    joinPixel: false,                // Join consecutive pixels with same intensity
+    joinPixel: true,                 // Join consecutive pixels with same intensity
     burnWhite: true,                 // [true = G1 S0 | false = G0] on inner white pixels
-    verboseG : true,                 // Output verbose GCode (print each commands)
-    diagonal : false,                // Go diagonally (increase the distance between pixels)
+    verboseG : false,                // Output verbose GCode (print each commands)
+    diagonal : false,                // Go diagonally (increase the distance between points)
     precision: { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
     offsets  : { X: 0, Y: 0 },       // Global coordinates offsets
     accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
@@ -48,6 +49,7 @@ function storeSettings() {
         beamPower: rasterizer.settings.beamPower,
         beamRange: rasterizer.settings.beamRange,
         feedRate : rasterizer.settings.feedRate,
+        overscan : rasterizer.settings.overscan,
         trimLine : rasterizer.settings.trimLine,
         joinPixel: rasterizer.settings.joinPixel,
         burnWhite: rasterizer.settings.burnWhite,
@@ -140,6 +142,7 @@ var beamPowerMaxInput = document.querySelector('#beamPowerMaxInput');
 var beamRangeMinInput = document.querySelector('#beamRangeMinInput');
 var beamRangeMaxInput = document.querySelector('#beamRangeMaxInput');
 var feedRateInput     = document.querySelector('#feedRateInput');
+var overscanInput     = document.querySelector('#overscanInput');
 var rasterizeButton   = document.querySelector('#rasterizeButton');
 var canvasWrapper     = document.querySelector('#canvasWrapper');
 var downloadButton    = document.querySelector('#downloadButton');
@@ -185,6 +188,7 @@ beamRangeMaxInput.value       = rasterizer.settings.beamRange.max;
 offsetsXInput.value           = rasterizer.settings.offsets.X;
 offsetsYInput.value           = rasterizer.settings.offsets.Y;
 feedRateInput.value           = rasterizer.settings.feedRate;
+overscanInput.value           = rasterizer.settings.overscan;
 fileInput.accept              = rasterizer.settings.accept.join(', ');
 fileInput.title               = fileInput.accept;
 fileInfo.style.display        = 'none';
@@ -211,6 +215,7 @@ function refreshSettings() {
     rasterizer.settings.offsets.X     = Number(offsetsXInput.value);
     rasterizer.settings.offsets.Y     = Number(offsetsYInput.value);
     rasterizer.settings.feedRate      = Number(feedRateInput.value);
+    rasterizer.settings.overscan      = Number(overscanInput.value);
     storeSettings();
 }
 
@@ -238,6 +243,7 @@ beamRangeMaxInput.addEventListener('change', refreshSettings, false);
 offsetsXInput.addEventListener(    'change', refreshSettings, false);
 offsetsYInput.addEventListener(    'change', refreshSettings, false);
 feedRateInput.addEventListener(    'change', refreshSettings, false);
+overscanInput.addEventListener(    'change', refreshSettings, false);
 
 fileInput.addEventListener('change', function(e) {
     if (fileInput.files.length) {

@@ -31,11 +31,12 @@ var lw = lw || {};
             beamRange: { min: 0, max: 1 },   // Beam power range (Firmware value)
             beamPower: { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
             feedRate : 1500,                 // Feed rate in mm/min (F value)
+            overscan : 0,                    // Overscan in millimeters
             trimLine : true,                 // Trim trailing white pixels
-            joinPixel: false,                // Join consecutive pixels with same intensity
+            joinPixel: true,                 // Join consecutive pixels with same intensity
             burnWhite: true,                 // [true = G1 S0 | false = G0] on inner white pixels
-            verboseG : true,                 // Output verbose GCode (print each commands)
-            diagonal : false,                // Go diagonally (increase the distance between pixels)
+            verboseG : false,                // Output verbose GCode (print each commands)
+            diagonal : false,                // Go diagonally (increase the distance between points)
             precision: { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
             offsets  : { X: 0, Y: 0 },       // Global coordinates offsets
             accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
