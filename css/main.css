@@ -78,6 +78,7 @@ pre, code {
     padding: 15px;
     position: fixed;
     overflow: auto;
+    z-index: 500;
 }
 
 #sidebar {
@@ -142,6 +143,7 @@ pre, code {
 }
 
 #gCodeWrapper {
+    z-index: 1000;
     position: fixed;
     display: none;
     top: 0;
