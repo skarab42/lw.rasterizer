@@ -22,6 +22,14 @@ var lw = lw || {};
         // http://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
         this.bufferSize = 2048; // resonable safe value ~2048 (TODO device limit detection)
 
+        // Grayscale algorithms
+        this.grayscaleAlgorithms = [
+            'average',
+            'luma', 'luma-601', 'luma-709',  'luma-240',
+            'desaturation', 'decomposition',
+            'red-chanel', 'green-chanel', 'blue-chanel'
+        ];
+
         // Defaults settings
         this.settings  = {
             baseUrl   : 'js/',                // Relative url to worker with trailing slash
@@ -30,6 +38,7 @@ var lw = lw || {};
             contrast  : 0,                    // Image contrast [-255 to +255]
             brightness: 0,                    // Image brightness [-255 to +255]
             gamma     : 0,                    // Image gamma correction [0.01 to 7.99]
+            grayscale : 'luma',               // Graysale algorithm [average, luma, luma-601, luma-709, luma-240, desaturation, decomposition-[min|max], [red|green|blue]-chanel]
             beamSize  : 0.1,                  // Beam size in millimeters
             beamRange : { min: 0, max: 1 },   // Beam power range (Firmware value)
             beamPower : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
@@ -115,11 +124,7 @@ var lw = lw || {};
         var contrast   = this.settings.contrast;
         var brightness = this.settings.brightness;
         var gamma      = this.settings.gamma;
-
-        // No filters
-        if (contrast === 0 && brightness === 0 && gamma === 0) {
-            return null;
-        }
+        var grayscale  = this.settings.grayscale;
 
         // Get canvas 2d context
         var context = canvas.getContext('2d');
@@ -141,27 +146,88 @@ var lw = lw || {};
         }
 
         // For each pixel
-        for (var i = 0; i < data.length; i += 4) {
+        var i, il, r, v, b, g;
+
+        for (i = 0, il = data.length; i < il; i += 4) {
+            // Get Red/Green/Blue values
+            r = data[i];
+            v = data[i + 1];
+            b = data[i + 2];
+
             // Contrast
             if (contrastFactor) {
-                data[i]     = imageColor(contrastFactor * (data[i]     - 128) + 128);
-                data[i + 1] = imageColor(contrastFactor * (data[i + 1] - 128) + 128);
-                data[i + 2] = imageColor(contrastFactor * (data[i + 2] - 128) + 128);
+                r = imageColor(contrastFactor * (r - 128) + 128);
+                v = imageColor(contrastFactor * (v - 128) + 128);
+                b = imageColor(contrastFactor * (b - 128) + 128);
             }
 
             // Brightness
             if (brightnessOffset) {
-                data[i]     = imageColor(data[i]     + brightnessOffset);
-                data[i + 1] = imageColor(data[i + 1] + brightnessOffset);
-                data[i + 2] = imageColor(data[i + 2] + brightnessOffset);
+                r = imageColor(r + brightnessOffset);
+                v = imageColor(v + brightnessOffset);
+                b = imageColor(b + brightnessOffset);
             }
 
             // Gamma
             if (gammaCorrection) {
-                data[i]     = imageColor(Math.exp(Math.log(255 * (data[i]     / 255)) * gammaCorrection));
-                data[i + 1] = imageColor(Math.exp(Math.log(255 * (data[i + 1] / 255)) * gammaCorrection));
-                data[i + 2] = imageColor(Math.exp(Math.log(255 * (data[i + 2] / 255)) * gammaCorrection));
+                r = imageColor(Math.exp(Math.log(255 * (r / 255)) * gammaCorrection));
+                v = imageColor(Math.exp(Math.log(255 * (v / 255)) * gammaCorrection));
+                b = imageColor(Math.exp(Math.log(255 * (b / 255)) * gammaCorrection));
             }
+
+            // Graysale
+            // http://www.tannerhelland.com/3643/grayscale-image-algorithm-vb6/
+
+            // Average
+            if (this.grayscaleAlgorithms.indexOf(grayscale) < 1) {
+                g = (r + v + b) / 3;
+            }
+
+            // Luma
+            else if (grayscale === 'luma') { // Default
+                g = (r * 0.3) + (v * 0.59) + (b * 0.11);
+            }
+            else if (grayscale === 'luma-601') { // CCIR-601
+                g = (r * 0.299) + (v * 0.587) + (b * 0.114);
+            }
+            else if (grayscale === 'luma-709') { // ITU-R-709
+                g = (r * 0.2126) + (v * 0.7152) + (b * 0.0722);
+            }
+            else if (grayscale === 'luma-240') { // SMPTE-240M
+                g = (r * 0.212) + (v * 0.701) + (b * 0.087);
+            }
+
+            // Desaturation
+            else if (grayscale === 'desaturation') {
+                g = (Math.max(r, v, b) + Math.min(r, v, b)) / 2;
+            }
+
+            // Decomposition
+            else if (grayscale === 'decomposition-min') {
+                g = Math.min(r, v, b);
+            }
+            else if (grayscale === 'decomposition-max') {
+                g = Math.max(r, v, b);
+            }
+
+            // RVB single chanel
+            else if (grayscale === 'red-chanel') {
+                g = r;
+            }
+            else if (grayscale === 'green-chanel') {
+                g = v;
+            }
+            else if (grayscale === 'blue-chanel') {
+                g = b;
+            }
+
+            // Force integer
+            g = parseInt(g);
+
+            // Set new r/v/b values
+            data[i]     = imageColor(g);
+            data[i + 1] = imageColor(g);
+            data[i + 2] = imageColor(g);
         }
 
         // Write new image data on the context

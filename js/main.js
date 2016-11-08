@@ -6,6 +6,7 @@ var settings = {
     contrast  : 0,                    // Image contrast [-255 to +255]
     brightness: 0,                    // Image brightness [-255 to +255]
     gamma     : 0,                    // Image gamma correction [0.01 to 7.99]
+    grayscale : 'luma',               // Graysale algorithm [average, luma, luma-601, luma-709, luma-240, desaturation, decomposition-[min|max], [red|green|blue]-chanel]
     beamSize  : 0.1,                  // Beam size in millimeters
     beamRange : { min: 0, max: 1 },   // Beam power range (Firmware value)
     beamPower : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
@@ -51,6 +52,7 @@ function storeSettings() {
         contrast  : rasterizer.settings.contrast,
         brightness: rasterizer.settings.brightness,
         gamma     : rasterizer.settings.gamma,
+        grayscale : rasterizer.settings.grayscale,
         beamSize  : rasterizer.settings.beamSize,
         beamPower : rasterizer.settings.beamPower,
         beamRange : rasterizer.settings.beamRange,
@@ -146,6 +148,7 @@ var brightnessInput   = document.querySelector('#brightnessInput');
 var brightnessValue   = document.querySelector('#brightnessValue');
 var gammaInput        = document.querySelector('#gammaInput');
 var gammaValue        = document.querySelector('#gammaValue');
+var grayscaleSelect   = document.querySelector('#grayscaleSelect');
 var beamPowerMinInput = document.querySelector('#beamPowerMinInput');
 var beamPowerMaxInput = document.querySelector('#beamPowerMaxInput');
 var beamRangeMinInput = document.querySelector('#beamRangeMinInput');
@@ -191,6 +194,7 @@ brightnessInput.value         = rasterizer.settings.brightness;
 brightnessValue.innerHTML     = rasterizer.settings.brightness;
 gammaInput.value              = rasterizer.settings.gamma;
 gammaValue.innerHTML          = rasterizer.settings.gamma;
+grayscaleSelect.value         = rasterizer.settings.grayscale;
 trimLineCheckbox.checked      = rasterizer.settings.trimLine;
 joinPixelCheckbox.checked     = rasterizer.settings.joinPixel;
 burnWhiteCheckbox.checked     = rasterizer.settings.burnWhite;
@@ -220,6 +224,7 @@ function refreshSettings() {
     rasterizer.settings.contrast      = Number(contrastInput.value);
     rasterizer.settings.brightness    = Number(brightnessInput.value);
     rasterizer.settings.gamma         = Number(gammaInput.value);
+    rasterizer.settings.grayscale     = String(grayscaleSelect.value);
     rasterizer.settings.trimLine      = Boolean(trimLineCheckbox.checked);
     rasterizer.settings.joinPixel     = Boolean(joinPixelCheckbox.checked);
     rasterizer.settings.burnWhite     = Boolean(burnWhiteCheckbox.checked);
@@ -259,6 +264,7 @@ smoothingCheckbox.addEventListener('change', refresh, false);
 contrastInput.addEventListener(    'change', refresh, false);
 brightnessInput.addEventListener(  'change', refresh, false);
 gammaInput.addEventListener(       'change', refresh, false);
+grayscaleSelect.addEventListener(  'change', refresh, false);
 trimLineCheckbox.addEventListener( 'change', refresh, false);
 joinPixelCheckbox.addEventListener('change', refresh, false);
 burnWhiteCheckbox.addEventListener('change', refresh, false);

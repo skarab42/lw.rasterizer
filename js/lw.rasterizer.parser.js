@@ -186,11 +186,8 @@ var lw = lw || {};
         // Pixel index
         var i = (y * (this.imageSize.width * 4)) + (x * 4);
 
-        // Gray value [0 = white - 255 = black]
-        var gray = 255 - ((data[i] + data[i + 1] + data[i + 2]) / 3);
-
-        // Return pixel power
-        return gray;
+        // Reversed gray value [0 = white - 255 = black]
+        return 255 - data[i];
     };
 
     // -------------------------------------------------------------------------

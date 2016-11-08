@@ -66,6 +66,24 @@
             </li>
             <li>
                 <label class="control">
+                    <span>Grayscaling</span> :
+                    <select id="grayscaleSelect">
+                        <option>average</option>
+                        <option>luma</option>
+                        <option>luma-601</option>
+                        <option>luma-709</option>
+                        <option>luma-240</option>
+                        <option>desaturation</option>
+                        <option>decomposition-min</option>
+                        <option>decomposition-max</option>
+                        <option>red-chanel</option>
+                        <option>green-chanel</option>
+                        <option>blue-chanel</option>
+                    </select>
+                </label>
+            </li>
+            <li>
+                <label class="control">
                     <span>Image contrast</span> :
                     <input id="contrastInput" type="range" placeholder="0" value="0" min="-255" max="255" step="1" />
                     <span id="contrastValue" class="unit">0</span>
