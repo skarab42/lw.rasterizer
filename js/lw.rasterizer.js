@@ -32,32 +32,33 @@ var lw = lw || {};
 
         // Defaults settings
         this.settings  = {
-            baseUrl   : 'js/',                // Relative url to worker with trailing slash
-            ppi       : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
-            smoothing : false,                // Smoothing the input image ?
-            contrast  : 0,                    // Image contrast [-255 to +255]
-            brightness: 0,                    // Image brightness [-255 to +255]
-            gamma     : 0,                    // Image gamma correction [0.01 to 7.99]
-            grayscale : 'luma',               // Graysale algorithm [average, luma, luma-601, luma-709, luma-240, desaturation, decomposition-[min|max], [red|green|blue]-chanel]
-            beamSize  : 0.1,                  // Beam size in millimeters
-            beamRange : { min: 0, max: 1 },   // Beam power range (Firmware value)
-            beamPower : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
-            feedRate  : 1500,                 // Feed rate in mm/min (F value)
-            overscan  : 0,                    // Overscan in millimeters
-            trimLine  : true,                 // Trim trailing white pixels
-            joinPixel : true,                 // Join consecutive pixels with same intensity
-            burnWhite : true,                 // [true = G1 S0 | false = G0] on inner white pixels
-            verboseG  : false,                // Output verbose GCode (print each commands)
-            diagonal  : false,                // Go diagonally (increase the distance between points)
-            precision : { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
-            offsets   : { X: 0, Y: 0 },       // Global coordinates offsets
-            accept    : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
-            onError   : null,
-            onFile    : null,
-            onImage   : null,
-            onCanvas  : null,
-            onGCode   : null,
-            onDone    : null
+            baseUrl     : 'js/',                // Relative url to worker with trailing slash
+            ppi         : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
+            smoothing   : false,                // Smoothing the input image ?
+            contrast    : 0,                    // Image contrast [-255 to +255]
+            brightness  : 0,                    // Image brightness [-255 to +255]
+            gamma       : 0,                    // Image gamma correction [0.01 to 7.99]
+            grayscale   : 'luma',               // Graysale algorithm [average, luma, luma-601, luma-709, luma-240, desaturation, decomposition-[min|max], [red|green|blue]-chanel]
+            shadesOfGray: 256,                  // Number of shades of gray [2-256]
+            beamSize    : 0.1,                  // Beam size in millimeters
+            beamRange   : { min: 0, max: 1 },   // Beam power range (Firmware value)
+            beamPower   : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
+            feedRate    : 1500,                 // Feed rate in mm/min (F value)
+            overscan    : 0,                    // Overscan in millimeters
+            trimLine    : true,                 // Trim trailing white pixels
+            joinPixel   : true,                 // Join consecutive pixels with same intensity
+            burnWhite   : true,                 // [true = G1 S0 | false = G0] on inner white pixels
+            verboseG    : false,                // Output verbose GCode (print each commands)
+            diagonal    : false,                // Go diagonally (increase the distance between points)
+            precision   : { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
+            offsets     : { X: 0, Y: 0 },       // Global coordinates offsets
+            accept      : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
+            onError     : null,
+            onFile      : null,
+            onImage     : null,
+            onCanvas    : null,
+            onGCode     : null,
+            onDone      : null
         };
 
         // Merge user settings
@@ -121,10 +122,11 @@ var lw = lw || {};
     // http://www.dfstudios.co.uk/articles/programming/image-programming-algorithms/
     lw.Rasterizer.prototype.applyImageFilters = function(canvas) {
         // Contrast / Brightness
-        var contrast   = this.settings.contrast;
-        var brightness = this.settings.brightness;
-        var gamma      = this.settings.gamma;
-        var grayscale  = this.settings.grayscale;
+        var contrast     = this.settings.contrast;
+        var brightness   = this.settings.brightness;
+        var gamma        = this.settings.gamma;
+        var grayscale    = this.settings.grayscale;
+        var shadesOfGray = this.settings.shadesOfGray;
 
         // Get canvas 2d context
         var context = canvas.getContext('2d');
@@ -143,6 +145,11 @@ var lw = lw || {};
 
         if (gamma !== 0) {
             var gammaCorrection = 1 / gamma;
+        }
+
+        // Shades of gray
+        if (shadesOfGray > 1 && shadesOfGray < 256) {
+            var shadesOfGrayFactor = 255 / (shadesOfGray - 1);
         }
 
         // For each pixel
@@ -219,6 +226,11 @@ var lw = lw || {};
             }
             else if (grayscale === 'blue-chanel') {
                 g = b;
+            }
+
+            // Shades of gray
+            if (shadesOfGrayFactor) {
+                g = parseInt(g / shadesOfGrayFactor) * shadesOfGrayFactor;
             }
 
             // Force integer

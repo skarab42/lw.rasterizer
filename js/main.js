@@ -1,25 +1,26 @@
 // Defaults settings
 var settings = {
-    baseUrl   : 'js/',                // Relative url to worker with trailing slash
-    ppi       : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
-    smoothing : false,                // Smoothing the input image ?
-    contrast  : 0,                    // Image contrast [-255 to +255]
-    brightness: 0,                    // Image brightness [-255 to +255]
-    gamma     : 0,                    // Image gamma correction [0.01 to 7.99]
-    grayscale : 'luma',               // Graysale algorithm [average, luma, luma-601, luma-709, luma-240, desaturation, decomposition-[min|max], [red|green|blue]-chanel]
-    beamSize  : 0.1,                  // Beam size in millimeters
-    beamRange : { min: 0, max: 1 },   // Beam power range (Firmware value)
-    beamPower : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
-    feedRate  : 1500,                 // Feed rate in mm/min (F value)
-    overscan  : 0,                    // Overscan in millimeters
-    trimLine  : true,                 // Trim trailing white pixels
-    joinPixel : true,                 // Join consecutive pixels with same intensity
-    burnWhite : true,                 // [true = G1 S0 | false = G0] on inner white pixels
-    verboseG  : false,                // Output verbose GCode (print each commands)
-    diagonal  : false,                // Go diagonally (increase the distance between points)
-    precision : { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
-    offsets   : { X: 0, Y: 0 },       // Global coordinates offsets
-    accept    : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
+    baseUrl     : 'js/',                // Relative url to worker with trailing slash
+    ppi         : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
+    smoothing   : false,                // Smoothing the input image ?
+    contrast    : 0,                    // Image contrast [-255 to +255]
+    brightness  : 0,                    // Image brightness [-255 to +255]
+    gamma       : 0,                    // Image gamma correction [0.01 to 7.99]
+    grayscale   : 'luma',               // Graysale algorithm [average, luma, luma-601, luma-709, luma-240, desaturation, decomposition-[min|max], [red|green|blue]-chanel]
+    shadesOfGray: 256,                  // Number of shades of gray [2-256]
+    beamSize    : 0.1,                  // Beam size in millimeters
+    beamRange   : { min: 0, max: 1 },   // Beam power range (Firmware value)
+    beamPower   : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
+    feedRate    : 1500,                 // Feed rate in mm/min (F value)
+    overscan    : 0,                    // Overscan in millimeters
+    trimLine    : true,                 // Trim trailing white pixels
+    joinPixel   : true,                 // Join consecutive pixels with same intensity
+    burnWhite   : true,                 // [true = G1 S0 | false = G0] on inner white pixels
+    verboseG    : false,                // Output verbose GCode (print each commands)
+    diagonal    : false,                // Go diagonally (increase the distance between points)
+    precision   : { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
+    offsets     : { X: 0, Y: 0 },       // Global coordinates offsets
+    accept      : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
     onError   : onError,
     onFile    : onFile,
     onImage   : onImage,
@@ -47,23 +48,24 @@ var rasterizer = new lw.Rasterizer(settings);
 // Store rasterizer settings
 function storeSettings() {
     localStorage.setItem('rasterizer', JSON.stringify({
-        ppi       : rasterizer.settings.ppi,
-        smoothing : rasterizer.settings.smoothing,
-        contrast  : rasterizer.settings.contrast,
-        brightness: rasterizer.settings.brightness,
-        gamma     : rasterizer.settings.gamma,
-        grayscale : rasterizer.settings.grayscale,
-        beamSize  : rasterizer.settings.beamSize,
-        beamPower : rasterizer.settings.beamPower,
-        beamRange : rasterizer.settings.beamRange,
-        feedRate  : rasterizer.settings.feedRate,
-        overscan  : rasterizer.settings.overscan,
-        trimLine  : rasterizer.settings.trimLine,
-        joinPixel : rasterizer.settings.joinPixel,
-        burnWhite : rasterizer.settings.burnWhite,
-        verboseG  : rasterizer.settings.verboseG,
-        diagonal  : rasterizer.settings.diagonal,
-        offsets   : rasterizer.settings.offsets
+        ppi         : rasterizer.settings.ppi,
+        smoothing   : rasterizer.settings.smoothing,
+        contrast    : rasterizer.settings.contrast,
+        brightness  : rasterizer.settings.brightness,
+        gamma       : rasterizer.settings.gamma,
+        grayscale   : rasterizer.settings.grayscale,
+        shadesOfGray: rasterizer.settings.shadesOfGray,
+        beamSize    : rasterizer.settings.beamSize,
+        beamPower   : rasterizer.settings.beamPower,
+        beamRange   : rasterizer.settings.beamRange,
+        feedRate    : rasterizer.settings.feedRate,
+        overscan    : rasterizer.settings.overscan,
+        trimLine    : rasterizer.settings.trimLine,
+        joinPixel   : rasterizer.settings.joinPixel,
+        burnWhite   : rasterizer.settings.burnWhite,
+        verboseG    : rasterizer.settings.verboseG,
+        diagonal    : rasterizer.settings.diagonal,
+        offsets     : rasterizer.settings.offsets
     }));
 }
 
@@ -149,6 +151,7 @@ var brightnessValue   = document.querySelector('#brightnessValue');
 var gammaInput        = document.querySelector('#gammaInput');
 var gammaValue        = document.querySelector('#gammaValue');
 var grayscaleSelect   = document.querySelector('#grayscaleSelect');
+var shadesOfGrayInput = document.querySelector('#shadesOfGrayInput');
 var beamPowerMinInput = document.querySelector('#beamPowerMinInput');
 var beamPowerMaxInput = document.querySelector('#beamPowerMaxInput');
 var beamRangeMinInput = document.querySelector('#beamRangeMinInput');
@@ -195,6 +198,7 @@ brightnessValue.innerHTML     = rasterizer.settings.brightness;
 gammaInput.value              = rasterizer.settings.gamma;
 gammaValue.innerHTML          = rasterizer.settings.gamma;
 grayscaleSelect.value         = rasterizer.settings.grayscale;
+shadesOfGrayInput.value       = rasterizer.settings.shadesOfGray;
 trimLineCheckbox.checked      = rasterizer.settings.trimLine;
 joinPixelCheckbox.checked     = rasterizer.settings.joinPixel;
 burnWhiteCheckbox.checked     = rasterizer.settings.burnWhite;
@@ -225,6 +229,7 @@ function refreshSettings() {
     rasterizer.settings.brightness    = Number(brightnessInput.value);
     rasterizer.settings.gamma         = Number(gammaInput.value);
     rasterizer.settings.grayscale     = String(grayscaleSelect.value);
+    rasterizer.settings.shadesOfGray  = Number(shadesOfGrayInput.value);
     rasterizer.settings.trimLine      = Boolean(trimLineCheckbox.checked);
     rasterizer.settings.joinPixel     = Boolean(joinPixelCheckbox.checked);
     rasterizer.settings.burnWhite     = Boolean(burnWhiteCheckbox.checked);
@@ -265,6 +270,7 @@ contrastInput.addEventListener(    'change', refresh, false);
 brightnessInput.addEventListener(  'change', refresh, false);
 gammaInput.addEventListener(       'change', refresh, false);
 grayscaleSelect.addEventListener(  'change', refresh, false);
+shadesOfGrayInput.addEventListener('change', refresh, false);
 trimLineCheckbox.addEventListener( 'change', refresh, false);
 joinPixelCheckbox.addEventListener('change', refresh, false);
 burnWhiteCheckbox.addEventListener('change', refresh, false);
