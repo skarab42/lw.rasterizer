@@ -30,13 +30,20 @@ var settings = {
 };
 
 // Get stored settings or set defaults
-var store = localStorage.getItem('rasterizer');
+var storeVersion = 1;
+var store        = localStorage.getItem('rasterizer');
 
 if (store) {
     store = JSON.parse(store);
 
-    for (var prop in store) {
-        settings[prop] = store[prop];
+    if (! store.storeVersion || store.storeVersion < storeVersion) {
+        localStorage.removeItem('rasterizer');
+        store = null;
+    }
+    else {
+        for (var prop in store) {
+            settings[prop] = store[prop];
+        }
     }
 }
 
@@ -65,9 +72,10 @@ function storeSettings() {
         burnWhite   : rasterizer.settings.burnWhite,
         verboseG    : rasterizer.settings.verboseG,
         diagonal    : rasterizer.settings.diagonal,
-        offsets     : rasterizer.settings.offsets
+        offsets     : rasterizer.settings.offsets,
+        storeVersion: storeVersion
     }));
-}
+};
 
 // Rasterizer callbacks
 function onError(message) {
