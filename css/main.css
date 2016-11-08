@@ -99,8 +99,13 @@ pre, code {
 }
 
 #sidebar .control span {
-    width: 80px;
+    width: 100px;
     display: inline-block;
+}
+
+#sidebar .control span.unit {
+    float: right;
+    width: auto;
 }
 
 #workspace {
