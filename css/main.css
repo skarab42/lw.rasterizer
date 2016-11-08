@@ -98,6 +98,10 @@ pre, code {
     max-width: 60px;
 }
 
+#sidebar .control input[type="range"] {
+    max-width: 120px;
+}
+
 #sidebar .control span {
     width: 100px;
     display: inline-block;

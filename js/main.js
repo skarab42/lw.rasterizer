@@ -3,6 +3,7 @@ var settings = {
     baseUrl  : 'js/',                // Relative url to worker with trailing slash
     ppi      : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
     smoothing: false,                // Smoothing the input image ?
+    contrast : 0,                    // Image contrast [-255 to +255]
     beamSize : 0.1,                  // Beam size in millimeters
     beamRange: { min: 0, max: 1 },   // Beam power range (Firmware value)
     beamPower: { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
@@ -45,6 +46,7 @@ function storeSettings() {
     localStorage.setItem('rasterizer', JSON.stringify({
         ppi      : rasterizer.settings.ppi,
         smoothing: rasterizer.settings.smoothing,
+        contrast : rasterizer.settings.contrast,
         beamSize : rasterizer.settings.beamSize,
         beamPower: rasterizer.settings.beamPower,
         beamRange: rasterizer.settings.beamRange,
@@ -125,9 +127,6 @@ function onDone() {
     downloadButton.style.display  = 'inline-block';
     showButton.style.display      = 'inline-block';
     jobDone.style.display         = 'inline-block';
-    //jobProgress.style.display     = 'none';
-    //gCodeText.innerHTML           = gcode;
-    //gCodeWrapper.style.display    = 'block';
 }
 
 // -----------------------------------------------------------------------------
@@ -137,6 +136,8 @@ var ppiInput          = document.querySelector('#ppiInput');
 var fileInput         = document.querySelector('#fileInput');
 var beamSizeInput     = document.querySelector('#beamSizeInput');
 var smoothingCheckbox = document.querySelector('#smoothingCheckbox');
+var contrastInput     = document.querySelector('#contrastInput');
+var contrastValue     = document.querySelector('#contrastValue');
 var beamPowerMinInput = document.querySelector('#beamPowerMinInput');
 var beamPowerMaxInput = document.querySelector('#beamPowerMaxInput');
 var beamRangeMinInput = document.querySelector('#beamRangeMinInput');
@@ -176,6 +177,8 @@ var jobTime         = jobDone.querySelector('.jobTime');
 ppiInput.value                = rasterizer.settings.ppi;
 beamSizeInput.value           = rasterizer.settings.beamSize;
 smoothingCheckbox.checked     = rasterizer.settings.smoothing;
+contrastInput.value           = rasterizer.settings.contrast;
+contrastValue.innerHTML       = rasterizer.settings.contrast;
 trimLineCheckbox.checked      = rasterizer.settings.trimLine;
 joinPixelCheckbox.checked     = rasterizer.settings.joinPixel;
 burnWhiteCheckbox.checked     = rasterizer.settings.burnWhite;
@@ -202,6 +205,7 @@ jobDone.style.display         = 'none';
 function refreshSettings() {
     rasterizer.settings.ppi           = Number(ppiInput.value);
     rasterizer.settings.smoothing     = Boolean(smoothingCheckbox.checked);
+    rasterizer.settings.contrast      = Number(contrastInput.value);
     rasterizer.settings.trimLine      = Boolean(trimLineCheckbox.checked);
     rasterizer.settings.joinPixel     = Boolean(joinPixelCheckbox.checked);
     rasterizer.settings.burnWhite     = Boolean(burnWhiteCheckbox.checked);
@@ -222,6 +226,8 @@ function refreshSettings() {
 function refresh() {
     refreshSettings();
 
+    contrastValue.innerHTML = rasterizer.settings.contrast;
+
     if (rasterizer.image) {
         rasterizer.loadImage(rasterizer.image);
     }
@@ -231,6 +237,8 @@ function refresh() {
 ppiInput.addEventListener(         'change', refresh, false);
 beamSizeInput.addEventListener(    'change', refresh, false);
 smoothingCheckbox.addEventListener('change', refresh, false);
+contrastInput.addEventListener(    'change', refresh, false);
+contrastInput.addEventListener(    'input' , refresh, false);
 trimLineCheckbox.addEventListener( 'change', refresh, false);
 joinPixelCheckbox.addEventListener('change', refresh, false);
 burnWhiteCheckbox.addEventListener('change', refresh, false);

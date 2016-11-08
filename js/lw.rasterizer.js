@@ -27,6 +27,7 @@ var lw = lw || {};
             baseUrl  : 'js/',                // Relative url to worker with trailing slash
             ppi      : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
             smoothing: false,                // Smoothing the input image ?
+            contrast : 0,                    // Image contrast [-255 to +255]
             beamSize : 0.1,                  // Beam size in millimeters
             beamRange: { min: 0, max: 1 },   // Beam power range (Firmware value)
             beamPower: { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
@@ -100,6 +101,51 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
+    // Image filters: contrast
+    // http://stackoverflow.com/questions/10521978/html5-canvas-image-contrast
+    function imageContrastFilter(imageData, contrast) {
+        var data   = imageData.data;
+        var factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+        for (var i = 0; i < data.length; i += 4) {
+            data[i]   = factor * (data[i]   - 128) + 128;
+            data[i+1] = factor * (data[i+1] - 128) + 128;
+            data[i+2] = factor * (data[i+2] - 128) + 128;
+        }
+
+        return imageData;
+    }
+
+    // -------------------------------------------------------------------------
+
+    // Apply image filters
+    lw.Rasterizer.prototype.applyImageFilters = function(context, width, height) {
+        // Smoothing
+        var smoothing = this.settings.smoothing;
+
+        if (context.imageSmoothingEnabled !== undefined) {
+            context.imageSmoothingEnabled = smoothing;
+        }
+        else {
+            context.mozImageSmoothingEnabled    = smoothing;
+            context.webkitImageSmoothingEnabled = smoothing;
+            context.msImageSmoothingEnabled     = smoothing;
+            context.oImageSmoothingEnabled      = smoothing;
+        }
+
+        // Contrast
+        var contrast = this.settings.contrast;
+
+        if (contrast !== 0) {
+            var imageData = context.getImageData(0, 0, width, height);
+            imageData     = imageContrastFilter(imageData, contrast);
+
+            context.putImageData(imageData, 0, 0);
+        }
+    };
+
+    // -------------------------------------------------------------------------
+
     // Process loaded image
     lw.Rasterizer.prototype.processImage = function() {
         // No image loaded
@@ -118,11 +164,9 @@ var lw = lw || {};
         };
 
         // Create canvas grid
-        var line      = null;
-        var canvas    = null;
-        var context   = null;
-        var imageData = null;
-        var smoothing = this.settings.smoothing;
+        var line    = null;
+        var canvas  = null;
+        var context = null;
 
         var x  = null;
         var y  = null;
@@ -163,16 +207,6 @@ var lw = lw || {};
                 // Get canvas 2d context
                 context = canvas.getContext('2d');
 
-                if (context.imageSmoothingEnabled !== undefined) {
-                    context.imageSmoothingEnabled = smoothing;
-                }
-                else {
-                    context.mozImageSmoothingEnabled    = smoothing;
-                    context.webkitImageSmoothingEnabled = smoothing;
-                    context.msImageSmoothingEnabled     = smoothing;
-                    context.oImageSmoothingEnabled      = smoothing;
-                }
-
                 // Fill withe background (avoid alpha chanel calculation)
                 context.fillStyle = 'white';
                 context.fillRect(0, 0, canvas.width, canvas.height);
@@ -188,6 +222,9 @@ var lw = lw || {};
                     sx, sy, sw, sh,
                     0, 0, canvas.width, canvas.height
                 );
+
+                // Apply image filters
+                this.applyImageFilters(context, sw, sh);
 
                 // Add the canvas to current line
                 line.push(canvas);
