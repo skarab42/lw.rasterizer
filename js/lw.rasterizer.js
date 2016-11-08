@@ -24,29 +24,31 @@ var lw = lw || {};
 
         // Defaults settings
         this.settings  = {
-            baseUrl  : 'js/',                // Relative url to worker with trailing slash
-            ppi      : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
-            smoothing: false,                // Smoothing the input image ?
-            contrast : 0,                    // Image contrast [-255 to +255]
-            beamSize : 0.1,                  // Beam size in millimeters
-            beamRange: { min: 0, max: 1 },   // Beam power range (Firmware value)
-            beamPower: { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
-            feedRate : 1500,                 // Feed rate in mm/min (F value)
-            overscan : 0,                    // Overscan in millimeters
-            trimLine : true,                 // Trim trailing white pixels
-            joinPixel: true,                 // Join consecutive pixels with same intensity
-            burnWhite: true,                 // [true = G1 S0 | false = G0] on inner white pixels
-            verboseG : false,                // Output verbose GCode (print each commands)
-            diagonal : false,                // Go diagonally (increase the distance between points)
-            precision: { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
-            offsets  : { X: 0, Y: 0 },       // Global coordinates offsets
-            accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
-            onError  : null,
-            onFile   : null,
-            onImage  : null,
-            onCanvas : null,
-            onGCode  : null,
-            onDone   : null
+            baseUrl   : 'js/',                // Relative url to worker with trailing slash
+            ppi       : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
+            smoothing : false,                // Smoothing the input image ?
+            contrast  : 0,                    // Image contrast [-255 to +255]
+            brightness: 0,                    // Image brightness [-255 to +255]
+            gamma     : 0,                    // Image gamma correction [0.01 to 7.99]
+            beamSize  : 0.1,                  // Beam size in millimeters
+            beamRange : { min: 0, max: 1 },   // Beam power range (Firmware value)
+            beamPower : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
+            feedRate  : 1500,                 // Feed rate in mm/min (F value)
+            overscan  : 0,                    // Overscan in millimeters
+            trimLine  : true,                 // Trim trailing white pixels
+            joinPixel : true,                 // Join consecutive pixels with same intensity
+            burnWhite : true,                 // [true = G1 S0 | false = G0] on inner white pixels
+            verboseG  : false,                // Output verbose GCode (print each commands)
+            diagonal  : false,                // Go diagonally (increase the distance between points)
+            precision : { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
+            offsets   : { X: 0, Y: 0 },       // Global coordinates offsets
+            accept    : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
+            onError   : null,
+            onFile    : null,
+            onImage   : null,
+            onCanvas  : null,
+            onGCode   : null,
+            onDone    : null
         };
 
         // Merge user settings
@@ -101,47 +103,69 @@ var lw = lw || {};
 
     // -------------------------------------------------------------------------
 
-    // Image filters: contrast
-    // http://stackoverflow.com/questions/10521978/html5-canvas-image-contrast
-    function imageContrastFilter(imageData, contrast) {
-        var data   = imageData.data;
-        var factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-
-        for (var i = 0; i < data.length; i += 4) {
-            data[i]   = factor * (data[i]   - 128) + 128;
-            data[i+1] = factor * (data[i+1] - 128) + 128;
-            data[i+2] = factor * (data[i+2] - 128) + 128;
-        }
-
-        return imageData;
+    // Trucate color value in the 0-255 range
+    function imageColor(color) {
+        return color < 0 ? 0 : (color > 255 ? 255 : color);
     }
 
-    // -------------------------------------------------------------------------
-
     // Apply image filters
-    lw.Rasterizer.prototype.applyImageFilters = function(context, width, height) {
-        // Smoothing
-        var smoothing = this.settings.smoothing;
+    // http://www.dfstudios.co.uk/articles/programming/image-programming-algorithms/
+    lw.Rasterizer.prototype.applyImageFilters = function(canvas) {
+        // Contrast / Brightness
+        var contrast   = this.settings.contrast;
+        var brightness = this.settings.brightness;
+        var gamma      = this.settings.gamma;
 
-        if (context.imageSmoothingEnabled !== undefined) {
-            context.imageSmoothingEnabled = smoothing;
-        }
-        else {
-            context.mozImageSmoothingEnabled    = smoothing;
-            context.webkitImageSmoothingEnabled = smoothing;
-            context.msImageSmoothingEnabled     = smoothing;
-            context.oImageSmoothingEnabled      = smoothing;
+        // No filters
+        if (contrast === 0 && brightness === 0 && gamma === 0) {
+            return null;
         }
 
-        // Contrast
-        var contrast = this.settings.contrast;
+        // Get canvas 2d context
+        var context = canvas.getContext('2d');
+
+        // Get image data
+        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        var data      = imageData.data;
 
         if (contrast !== 0) {
-            var imageData = context.getImageData(0, 0, width, height);
-            imageData     = imageContrastFilter(imageData, contrast);
-
-            context.putImageData(imageData, 0, 0);
+            var contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
         }
+
+        if (brightness !== 0) {
+            var brightnessOffset = brightness;
+        }
+
+        if (gamma !== 0) {
+            var gammaCorrection = 1 / gamma;
+        }
+
+        // For each pixel
+        for (var i = 0; i < data.length; i += 4) {
+            // Contrast
+            if (contrastFactor) {
+                data[i]     = imageColor(contrastFactor * (data[i]     - 128) + 128);
+                data[i + 1] = imageColor(contrastFactor * (data[i + 1] - 128) + 128);
+                data[i + 2] = imageColor(contrastFactor * (data[i + 2] - 128) + 128);
+            }
+
+            // Brightness
+            if (brightnessOffset) {
+                data[i]     = imageColor(data[i]     + brightnessOffset);
+                data[i + 1] = imageColor(data[i + 1] + brightnessOffset);
+                data[i + 2] = imageColor(data[i + 2] + brightnessOffset);
+            }
+
+            // Gamma
+            if (gammaCorrection) {
+                data[i]     = imageColor(Math.exp(Math.log(255 * (data[i]     / 255)) * gammaCorrection));
+                data[i + 1] = imageColor(Math.exp(Math.log(255 * (data[i + 1] / 255)) * gammaCorrection));
+                data[i + 2] = imageColor(Math.exp(Math.log(255 * (data[i + 2] / 255)) * gammaCorrection));
+            }
+        }
+
+        // Write new image data on the context
+        context.putImageData(imageData, 0, 0);
     };
 
     // -------------------------------------------------------------------------
@@ -207,6 +231,19 @@ var lw = lw || {};
                 // Get canvas 2d context
                 context = canvas.getContext('2d');
 
+                // Smoothing
+                var smoothing = this.settings.smoothing;
+
+                if (context.imageSmoothingEnabled !== undefined) {
+                    context.imageSmoothingEnabled = smoothing;
+                }
+                else {
+                    context.mozImageSmoothingEnabled    = smoothing;
+                    context.webkitImageSmoothingEnabled = smoothing;
+                    context.msImageSmoothingEnabled     = smoothing;
+                    context.oImageSmoothingEnabled      = smoothing;
+                }
+
                 // Fill withe background (avoid alpha chanel calculation)
                 context.fillStyle = 'white';
                 context.fillRect(0, 0, canvas.width, canvas.height);
@@ -224,7 +261,7 @@ var lw = lw || {};
                 );
 
                 // Apply image filters
-                this.applyImageFilters(context, sw, sh);
+                this.applyImageFilters(canvas);
 
                 // Add the canvas to current line
                 line.push(canvas);

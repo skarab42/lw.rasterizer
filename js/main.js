@@ -1,28 +1,30 @@
 // Defaults settings
 var settings = {
-    baseUrl  : 'js/',                // Relative url to worker with trailing slash
-    ppi      : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
-    smoothing: false,                // Smoothing the input image ?
-    contrast : 0,                    // Image contrast [-255 to +255]
-    beamSize : 0.1,                  // Beam size in millimeters
-    beamRange: { min: 0, max: 1 },   // Beam power range (Firmware value)
-    beamPower: { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
-    feedRate : 1500,                 // Feed rate in mm/min (F value)
-    overscan : 0,                    // Overscan in millimeters
-    trimLine : true,                 // Trim trailing white pixels
-    joinPixel: true,                 // Join consecutive pixels with same intensity
-    burnWhite: true,                 // [true = G1 S0 | false = G0] on inner white pixels
-    verboseG : false,                // Output verbose GCode (print each commands)
-    diagonal : false,                // Go diagonally (increase the distance between points)
-    precision: { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
-    offsets  : { X: 0, Y: 0 },       // Global coordinates offsets
-    accept   : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
-    onError  : onError,
-    onFile   : onFile,
-    onImage  : onImage,
-    onCanvas : onCanvas,
-    onGCode  : onGCode,
-    onDone   : onDone
+    baseUrl   : 'js/',                // Relative url to worker with trailing slash
+    ppi       : 254,                  // Pixel Per Inch (25.4 ppi == 1 ppm)
+    smoothing : false,                // Smoothing the input image ?
+    contrast  : 0,                    // Image contrast [-255 to +255]
+    brightness: 0,                    // Image brightness [-255 to +255]
+    gamma     : 0,                    // Image gamma correction [0.01 to 7.99]
+    beamSize  : 0.1,                  // Beam size in millimeters
+    beamRange : { min: 0, max: 1 },   // Beam power range (Firmware value)
+    beamPower : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
+    feedRate  : 1500,                 // Feed rate in mm/min (F value)
+    overscan  : 0,                    // Overscan in millimeters
+    trimLine  : true,                 // Trim trailing white pixels
+    joinPixel : true,                 // Join consecutive pixels with same intensity
+    burnWhite : true,                 // [true = G1 S0 | false = G0] on inner white pixels
+    verboseG  : false,                // Output verbose GCode (print each commands)
+    diagonal  : false,                // Go diagonally (increase the distance between points)
+    precision : { X: 2, Y: 2, S: 4 }, // Number of decimals for each commands
+    offsets   : { X: 0, Y: 0 },       // Global coordinates offsets
+    accept    : ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'],
+    onError   : onError,
+    onFile    : onFile,
+    onImage   : onImage,
+    onCanvas  : onCanvas,
+    onGCode   : onGCode,
+    onDone    : onDone
 };
 
 // Get stored settings or set defaults
@@ -44,20 +46,22 @@ var rasterizer = new lw.Rasterizer(settings);
 // Store rasterizer settings
 function storeSettings() {
     localStorage.setItem('rasterizer', JSON.stringify({
-        ppi      : rasterizer.settings.ppi,
-        smoothing: rasterizer.settings.smoothing,
-        contrast : rasterizer.settings.contrast,
-        beamSize : rasterizer.settings.beamSize,
-        beamPower: rasterizer.settings.beamPower,
-        beamRange: rasterizer.settings.beamRange,
-        feedRate : rasterizer.settings.feedRate,
-        overscan : rasterizer.settings.overscan,
-        trimLine : rasterizer.settings.trimLine,
-        joinPixel: rasterizer.settings.joinPixel,
-        burnWhite: rasterizer.settings.burnWhite,
-        verboseG : rasterizer.settings.verboseG,
-        diagonal : rasterizer.settings.diagonal,
-        offsets  : rasterizer.settings.offsets
+        ppi       : rasterizer.settings.ppi,
+        smoothing : rasterizer.settings.smoothing,
+        contrast  : rasterizer.settings.contrast,
+        brightness: rasterizer.settings.brightness,
+        gamma     : rasterizer.settings.gamma,
+        beamSize  : rasterizer.settings.beamSize,
+        beamPower : rasterizer.settings.beamPower,
+        beamRange : rasterizer.settings.beamRange,
+        feedRate  : rasterizer.settings.feedRate,
+        overscan  : rasterizer.settings.overscan,
+        trimLine  : rasterizer.settings.trimLine,
+        joinPixel : rasterizer.settings.joinPixel,
+        burnWhite : rasterizer.settings.burnWhite,
+        verboseG  : rasterizer.settings.verboseG,
+        diagonal  : rasterizer.settings.diagonal,
+        offsets   : rasterizer.settings.offsets
     }));
 }
 
@@ -138,6 +142,10 @@ var beamSizeInput     = document.querySelector('#beamSizeInput');
 var smoothingCheckbox = document.querySelector('#smoothingCheckbox');
 var contrastInput     = document.querySelector('#contrastInput');
 var contrastValue     = document.querySelector('#contrastValue');
+var brightnessInput   = document.querySelector('#brightnessInput');
+var brightnessValue   = document.querySelector('#brightnessValue');
+var gammaInput        = document.querySelector('#gammaInput');
+var gammaValue        = document.querySelector('#gammaValue');
 var beamPowerMinInput = document.querySelector('#beamPowerMinInput');
 var beamPowerMaxInput = document.querySelector('#beamPowerMaxInput');
 var beamRangeMinInput = document.querySelector('#beamRangeMinInput');
@@ -179,6 +187,10 @@ beamSizeInput.value           = rasterizer.settings.beamSize;
 smoothingCheckbox.checked     = rasterizer.settings.smoothing;
 contrastInput.value           = rasterizer.settings.contrast;
 contrastValue.innerHTML       = rasterizer.settings.contrast;
+brightnessInput.value         = rasterizer.settings.brightness;
+brightnessValue.innerHTML     = rasterizer.settings.brightness;
+gammaInput.value              = rasterizer.settings.gamma;
+gammaValue.innerHTML          = rasterizer.settings.gamma;
 trimLineCheckbox.checked      = rasterizer.settings.trimLine;
 joinPixelCheckbox.checked     = rasterizer.settings.joinPixel;
 burnWhiteCheckbox.checked     = rasterizer.settings.burnWhite;
@@ -206,6 +218,8 @@ function refreshSettings() {
     rasterizer.settings.ppi           = Number(ppiInput.value);
     rasterizer.settings.smoothing     = Boolean(smoothingCheckbox.checked);
     rasterizer.settings.contrast      = Number(contrastInput.value);
+    rasterizer.settings.brightness    = Number(brightnessInput.value);
+    rasterizer.settings.gamma         = Number(gammaInput.value);
     rasterizer.settings.trimLine      = Boolean(trimLineCheckbox.checked);
     rasterizer.settings.joinPixel     = Boolean(joinPixelCheckbox.checked);
     rasterizer.settings.burnWhite     = Boolean(burnWhiteCheckbox.checked);
@@ -223,10 +237,15 @@ function refreshSettings() {
     storeSettings();
 }
 
-function refresh() {
-    refreshSettings();
+function refreshSliders() {
+    contrastValue.innerHTML   = contrastInput.value;
+    brightnessValue.innerHTML = brightnessInput.value;
+    gammaValue.innerHTML      = gammaInput.value;
+}
 
-    contrastValue.innerHTML = rasterizer.settings.contrast;
+function refresh() {
+    refreshSliders();
+    refreshSettings();
 
     if (rasterizer.image) {
         rasterizer.loadImage(rasterizer.image);
@@ -238,12 +257,16 @@ ppiInput.addEventListener(         'change', refresh, false);
 beamSizeInput.addEventListener(    'change', refresh, false);
 smoothingCheckbox.addEventListener('change', refresh, false);
 contrastInput.addEventListener(    'change', refresh, false);
-contrastInput.addEventListener(    'input' , refresh, false);
+brightnessInput.addEventListener(  'change', refresh, false);
+gammaInput.addEventListener(       'change', refresh, false);
 trimLineCheckbox.addEventListener( 'change', refresh, false);
 joinPixelCheckbox.addEventListener('change', refresh, false);
 burnWhiteCheckbox.addEventListener('change', refresh, false);
 verboseGCheckbox.addEventListener( 'change', refresh, false);
 diagonalCheckbox.addEventListener( 'change', refresh, false);
+contrastInput.addEventListener(    'input' , refreshSliders, false);
+brightnessInput.addEventListener(  'input' , refreshSliders, false);
+gammaInput.addEventListener(       'input' , refreshSliders, false);
 beamPowerMinInput.addEventListener('change', refreshSettings, false);
 beamPowerMaxInput.addEventListener('change', refreshSettings, false);
 beamRangeMinInput.addEventListener('change', refreshSettings, false);
