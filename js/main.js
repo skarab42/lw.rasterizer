@@ -358,8 +358,15 @@ for (var i = 0; i < tooltips.length; i++) {
         var tip = this.querySelector('.tooltip');
 
         if (tip) {
+            var html = tip.innerHTML;
+
+            if (! html.length) {
+                html = lw.rasterizer.getTooltip(tip.getAttribute('name'), true);
+                tip.innerHTML = html;
+            }
+
             tooltip.style.top     = this.getBoundingClientRect().top + 'px';
-            tooltip.innerHTML     = tip.innerHTML;
+            tooltip.innerHTML     = html;
             tooltip.style.display = 'block';
         }
     });
