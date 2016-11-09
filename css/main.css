@@ -36,6 +36,11 @@ pre, code {
     background-color: transparent;
 }
 
+.control select {
+    color: #f3f3f3;
+    background-color: #222;
+}
+
 .control :disabled {
     color: #555;
     cursor: not-allowed;

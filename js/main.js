@@ -12,6 +12,7 @@ var settings = {
     beamRange   : { min: 0, max: 1 },   // Beam power range (Firmware value)
     beamPower   : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
     feedRate    : 1500,                 // Feed rate in mm/min (F value)
+    feedUnit    : 'mm/min',             // Feed rate unit [mm/min, mm/sec]
     overscan    : 0,                    // Overscan in millimeters
     trimLine    : true,                 // Trim trailing white pixels
     joinPixel   : true,                 // Join consecutive pixels with same intensity
@@ -66,6 +67,7 @@ function storeSettings() {
         beamPower   : rasterizer.settings.beamPower,
         beamRange   : rasterizer.settings.beamRange,
         feedRate    : rasterizer.settings.feedRate,
+        feedUnit    : rasterizer.settings.feedUnit,
         overscan    : rasterizer.settings.overscan,
         trimLine    : rasterizer.settings.trimLine,
         joinPixel   : rasterizer.settings.joinPixel,
@@ -165,6 +167,7 @@ var beamPowerMaxInput = document.querySelector('#beamPowerMaxInput');
 var beamRangeMinInput = document.querySelector('#beamRangeMinInput');
 var beamRangeMaxInput = document.querySelector('#beamRangeMaxInput');
 var feedRateInput     = document.querySelector('#feedRateInput');
+var feedUnitInput     = document.querySelector('#feedUnitInput');
 var overscanInput     = document.querySelector('#overscanInput');
 var rasterizeButton   = document.querySelector('#rasterizeButton');
 var canvasWrapper     = document.querySelector('#canvasWrapper');
@@ -219,6 +222,7 @@ beamRangeMaxInput.value       = rasterizer.settings.beamRange.max;
 offsetsXInput.value           = rasterizer.settings.offsets.X;
 offsetsYInput.value           = rasterizer.settings.offsets.Y;
 feedRateInput.value           = rasterizer.settings.feedRate;
+feedUnitInput.value           = rasterizer.settings.feedUnit;
 overscanInput.value           = rasterizer.settings.overscan;
 fileInput.accept              = rasterizer.settings.accept.join(', ');
 fileInput.title               = fileInput.accept;
@@ -251,6 +255,7 @@ function refreshSettings() {
     rasterizer.settings.offsets.X     = Number(offsetsXInput.value);
     rasterizer.settings.offsets.Y     = Number(offsetsYInput.value);
     rasterizer.settings.feedRate      = Number(feedRateInput.value);
+    rasterizer.settings.feedUnit      = String(feedUnitInput.value);
     rasterizer.settings.overscan      = Number(overscanInput.value);
     storeSettings();
 }
@@ -259,6 +264,17 @@ function refreshSliders() {
     contrastValue.innerHTML   = contrastInput.value;
     brightnessValue.innerHTML = brightnessInput.value;
     gammaValue.innerHTML      = gammaInput.value;
+}
+
+function refreshFeedRate() {
+    if (rasterizer.settings.feedUnit === 'mm/sec') {
+        feedRateInput.value *= 60;
+    }
+    else {
+        feedRateInput.value /= 60;
+    }
+
+    refreshSettings();
 }
 
 function refresh() {
@@ -294,6 +310,7 @@ beamRangeMaxInput.addEventListener('change', refreshSettings, false);
 offsetsXInput.addEventListener(    'change', refreshSettings, false);
 offsetsYInput.addEventListener(    'change', refreshSettings, false);
 feedRateInput.addEventListener(    'change', refreshSettings, false);
+feedUnitInput.addEventListener(    'change', refreshFeedRate, false);
 overscanInput.addEventListener(    'change', refreshSettings, false);
 
 fileInput.addEventListener('change', function(e) {

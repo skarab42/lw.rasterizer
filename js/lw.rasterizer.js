@@ -44,6 +44,7 @@ var lw = lw || {};
             beamRange   : { min: 0, max: 1 },   // Beam power range (Firmware value)
             beamPower   : { min: 0, max: 100 }, // Beam power (S value) as percentage of beamRange
             feedRate    : 1500,                 // Feed rate in mm/min (F value)
+            feedUnit    : 'mm/min',             // Feed rate unit [mm/min, mm/sec]
             overscan    : 0,                    // Overscan in millimeters
             trimLine    : true,                 // Trim trailing white pixels
             joinPixel   : true,                 // Join consecutive pixels with same intensity

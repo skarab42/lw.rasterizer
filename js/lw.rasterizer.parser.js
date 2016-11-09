@@ -40,6 +40,11 @@ var lw = lw || {};
         // Calculate real beam range
         this.beamRange.min = this.beamRange.max / 100 * this.beamPower.min;
         this.beamRange.max = this.beamRange.max / 100 * this.beamPower.max;
+
+        // Adjuste feed rate to mm/min
+        if (this.feedUnit === 'mm/sec') {
+            this.feedRate *= 60;
+        }
     };
 
     // -------------------------------------------------------------------------

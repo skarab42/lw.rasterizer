@@ -46,7 +46,12 @@
                     <label class="control">
                         <span>Feed rate</span> :
                         <input id="feedRateInput" type="number" min="1" step="1" placeholder="1500" />
-                        <span class="unit">mm/min</span>
+                        <span class="unit">
+                            <select id="feedUnitInput">
+                                <option>mm/min</option>
+                                <option>mm/sec</option>
+                            </select>
+                        </span>
                     </label>
                 </li>
                 <li>
