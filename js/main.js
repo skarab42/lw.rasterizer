@@ -198,6 +198,9 @@ var jobPercent      = jobProgress.querySelector('.jobPercent');
 var jobDone         = fileInfo.querySelector('.jobDone');
 var jobTime         = jobDone.querySelector('.jobTime');
 
+var tooltip  = document.querySelector('#tooltip');
+var tooltips = document.querySelectorAll('#sidebar li');
+
 // Set defaults values
 ppiInput.value                = rasterizer.settings.ppi;
 beamSizeInput.value           = rasterizer.settings.beamSize;
@@ -225,7 +228,7 @@ feedRateInput.value           = rasterizer.settings.feedRate;
 feedUnitInput.value           = rasterizer.settings.feedUnit;
 overscanInput.value           = rasterizer.settings.overscan;
 fileInput.accept              = rasterizer.settings.accept.join(', ');
-fileInput.title               = fileInput.accept;
+//fileInput.title               = fileInput.accept;
 fileInfo.style.display        = 'none';
 rasterizeButton.style.display = 'none';
 downloadButton.style.display  = 'none';
@@ -335,8 +338,6 @@ rasterizeButton.addEventListener('click', function(e) {
     rasterizer.rasterize();
 }, false);
 
-
-
 downloadButton.addEventListener('click', function(e) {
     var gcode = gCodeArray.join('\n');
     gCodeFile = new Blob([gcode], { type: 'text/plain;charset=utf-8' });
@@ -351,6 +352,26 @@ showButton.addEventListener('click', function(e) {
 closeButton.addEventListener('click', function(e) {
     gCodeWrapper.style.display = 'none';
 });
+
+for (var i = 0; i < tooltips.length; i++) {
+    tooltips[i].addEventListener('mouseover', function(e) {
+        var tip = this.querySelector('.tooltip');
+
+        if (tip) {
+            tooltip.style.top     = this.getBoundingClientRect().top + 'px';
+            tooltip.innerHTML     = tip.innerHTML;
+            tooltip.style.display = 'block';
+        }
+    });
+
+    tooltips[i].addEventListener('mouseout', function(e) {
+        var tip = this.querySelector('.tooltip');
+
+        if (tip) {
+            tooltip.style.display = 'none';
+        }
+    });
+}
 
 // -----------------------------------------------------------------------------
 

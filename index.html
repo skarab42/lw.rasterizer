@@ -12,13 +12,32 @@
         <div id="rasterizer">
             <ul id="sidebar">
                 <li><h1>lw.Rasterizer.js</h1></li>
-                <li><label class="control button">Browse <input id="fileInput" type="file" /></label></li>
-                <li><a class="control button" id="rasterizeButton">Rasterize</a></li>
+                <li>
+                    <label class="control button">Browse <input id="fileInput" type="file" /></label>
+                    <span class="tooltip">
+                        Select a file from your computer to rasterize.<br /><br />
+                        Allowed <code>png</code> <code>jpeg</code> <code>gif</code> <code>bmp</code> <code>svg</code>
+                    </span>
+                </li>
+                <li>
+                    <a class="control button" id="rasterizeButton">Rasterize</a>
+                    <span class="tooltip">
+                        Start the rasterization !
+                    </span>
+                </li>
                 <li>
                     <label class="control">
                         <span>PPI</span> :
                         <input id="ppiInput" type="number" min="25.4" step="0.1" placeholder="254" />
                     </label>
+                    <span class="tooltip">
+                        PPI = Pixel Per Inch (or DPI = Dot Per Inch)<br /><br />
+                        Your best belt for a better result is to take care of your beam size when you save your image, this is not mandatory but is recommended if you can.<br /><br />
+                        Ex.: If your beam size is "0.1mm", you want your image match "1px = 0.1mm" for a maximal resolution.<br /><br />
+                        <code>25.4 PPI = 1 PPM = Pixel Per Millimeter</code> <code>25.4 / 0.1mm = 254PPI.</code><br /><br />
+                        For a beam diameter of "0.1mm" save your image at "254 PPI".<br />
+                        For a beam diameter of "0.2mm" save your image at "127 PPI".
+                    </span>
                 </li>
                 <li>
                     <label class="control">
@@ -26,6 +45,21 @@
                         <input id="beamSizeInput" type="number" min="0.01" step="0.01" placeholder="0.1" />
                         <span class="unit">mm</span>
                     </label>
+                    <span class="tooltip">
+                        The laser beam diameter in millimeters.
+                    </span>
+                </li>
+                <li>
+                    <label class="control">
+                        <span>Beam range</span> :
+                        <input id="beamRangeMinInput" type="number" min="0" placeholder="0" value="0" disabled /> to
+                        <input id="beamRangeMaxInput" type="number" min="0" placeholder="1" />
+                    </label>
+                    <span class="tooltip">
+                        The laser beam power range set in your firmware.<br /><br />
+                        - Smoothie <code>min: 0</code> <code>max: 1</code><br />
+                        - GRBL <code>min: 0</code> <code>max: 255</code>
+                    </span>
                 </li>
                 <li>
                     <label class="control">
@@ -34,13 +68,12 @@
                         <input id="beamPowerMaxInput" type="number" min="0" max="100" step="1" placeholder="100" />
                         <span class="unit">%</span>
                     </label>
-                </li>
-                <li>
-                    <label class="control">
-                        <span>Beam range</span> :
-                        <input id="beamRangeMinInput" type="number" min="0" placeholder="0" value="0" disabled /> to
-                        <input id="beamRangeMaxInput" type="number" min="0" placeholder="1" />
-                    </label>
+                    <span class="tooltip">
+                        The laser beam power limits from 0 to 100% of the beam range set above.<br /><br />
+                        Ex.: if your beam range is set to <code>0 - 1</code> and the beam power is set to <code>20% - 80%</code><br />
+                        the <code>S</code> value in the outputed GCode never go out of the range of <code>0.2 - 0.8</code>.<br />
+                        That means the color palet is mapped to this range <code>white = 0.2</code> - <code>black = 0.8</code>.
+                    </span>
                 </li>
                 <li>
                     <label class="control">
@@ -53,6 +86,9 @@
                             </select>
                         </span>
                     </label>
+                    <span class="tooltip">
+                        The constant speed for the entier job set in millimeters per minutes or seconds.
+                    </span>
                 </li>
                 <li>
                     <label class="control">
@@ -61,6 +97,9 @@
                         <input id="offsetsYInput" type="number" placeholder="0" value="0" />
                         <span class="unit">mm</span>
                     </label>
+                    <span class="tooltip">
+                        Global X and Y axis offsets in millimeters.
+                    </span>
                 </li>
                 <li>
                     <label class="control">
@@ -68,11 +107,16 @@
                         <input id="overscanInput" type="number" placeholder="0" min="0" placeholder="0" value="0" />
                         <span class="unit">mm</span>
                     </label>
+                    <span class="tooltip">
+                        This feature add some extra white spaces before and after each line.<br />
+                        This leaves time to reach the feed rate before starting to engrave<br />
+                        and can prevent over buring the edges of the raster.
+                    </span>
                 </li>
                 <li>
                     <label class="control">
                         <span>Grayscaling</span> :
-                        <select id="grayscaleSelect">
+                        <select id="grayscaleSelect" class="fr">
                             <option>average</option>
                             <option>luma</option>
                             <option>luma-601</option>
@@ -86,11 +130,24 @@
                             <option>blue-chanel</option>
                         </select>
                     </label>
+                    <span class="tooltip">
+                        Because the human eye does not perceive all the colors in the same way,<br />
+                        here are some classic algorithms that attempts to correct this offset.
+                    </span>
                 </li>
                 <li>
                     <label class="control">
                         <span>Shades of gray</span> :
                         <input id="shadesOfGrayInput" type="number" placeholder="256" value="256" min="2" max="256" step="1" /> / 256
+                    </label>
+                    <span class="tooltip">
+                        Reduce the colors palet to X shades of gray.<br />
+                        This can save some GCode bytes on dirty pictures.
+                    </span>
+                </li>
+                <li>
+                    <label class="control">
+                        <input id="smoothingCheckbox" type="checkbox" /> Image smoothing
                     </label>
                 </li>
                 <li>
@@ -114,12 +171,50 @@
                         <span id="gammaValue" class="unit">0</span>
                     </label>
                 </li>
-                <li><label class="control"><input id="smoothingCheckbox" type="checkbox" /> Smoothing image</label></li>
-                <li><label class="control"><input id="trimLineCheckbox" type="checkbox" /> Trim trailing white pixels</label></li>
-                <li><label class="control"><input id="joinPixelCheckbox" type="checkbox" /> Join consecutive pixels with same intensity</label></li>
-                <li><label class="control"><input id="burnWhiteCheckbox" type="checkbox" /> Burn white pixels at no power (G1 S0)</label></li>
-                <li><label class="control"><input id="verboseGCheckbox" type="checkbox" /> Verbose GCode output</label></li>
-                <li><label class="control"><input id="diagonalCheckbox" type="checkbox" /> Diagonal vs Horizontal paths</label></li>
+                <li>
+                    <label class="control">
+                        <input id="trimLineCheckbox" type="checkbox" /> Trim trailing white pixels
+                    </label>
+                    <span class="tooltip">
+                        Remove all trailing white pixels from the both ends of each line.<br />
+                        This can significantly reduce the time to engrave and the GCode file size.
+                    </span>
+                </li>
+                <li>
+                    <label class="control">
+                        <input id="joinPixelCheckbox" type="checkbox" /> Join consecutive pixels with same intensity
+                    </label>
+                    <span class="tooltip">
+                        Draw a single line if several consecutive pixels of the same intensity are detected.<br />
+                        This can significantly reduce the number of instruction and the GCode file size.
+                    </span>
+                </li>
+                <li>
+                    <label class="control">
+                        <input id="burnWhiteCheckbox" type="checkbox" /> Burn white pixels at no power (G1 S0).
+                    </label>
+                    <span class="tooltip">
+                        Avoids turning off the laser power but prevents burning by forcing the <code>S</code> value to zero <code>G1 S0</code>.
+                    </span>
+                </li>
+                <li>
+                    <label class="control">
+                        <input id="verboseGCheckbox" type="checkbox" /> Verbose GCode output
+                    </label>
+                    <span class="tooltip">
+                        In verbose mode, all GCode instructions will be included,<br />
+                        otherwise only necessary instructions will be included.
+                    </span>
+                </li>
+                <li>
+                    <label class="control">
+                        <input id="diagonalCheckbox" type="checkbox" /> Diagonal vs Horizontal paths
+                    </label>
+                    <span class="tooltip">
+                        If checked, scan the image diagonally rather than horizontally.<br />
+                        This increase the distance between each points.
+                    </span>
+                </li>
                 <li>
                     <a class="github-button" href="https://github.com/lautr3k/lw.Rasterizer.js/fork" data-style="mega" data-count-href="/lautr3k/lw.Rasterizer.js/network" data-count-api="/repos/lautr3k/lw.Rasterizer.js#forks_count" data-count-aria-label="# forks on GitHub" aria-label="Fork lautr3k/lw.Rasterizer.js on GitHub">Fork</a>
                     <a class="github-button" href="https://github.com/lautr3k/lw.Rasterizer.js" data-icon="octicon-star" data-style="mega" data-count-href="/lautr3k/lw.Rasterizer.js/stargazers" data-count-api="/repos/lautr3k/lw.Rasterizer.js#stargazers_count" data-count-aria-label="# stargazers on GitHub" aria-label="Star lautr3k/lw.Rasterizer.js on GitHub">Star</a>
@@ -129,6 +224,9 @@
                         <input type="image" src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal – The safer, easier way to pay online!">
                         <img alt="" border="0" src="https://www.paypalobjects.com/fr_FR/i/scr/pixel.gif" width="1" height="1">
                     </form>
+                    <span class="tooltip">
+                        Three ways to contribute ;)
+                    </span>
                 </li>
             </ul><!-- #sidebar -->
             <div id="workspace">
@@ -146,6 +244,7 @@
                 <div id="canvasWrapper"></div>
             </div><!-- #workspace -->
         </div><!-- #rasterizer -->
+        <div id="tooltip"></div>
         <div id="gCodeWrapper">
             <form><a class="control button" id="closeButton">Close</a></form>
             <br /><pre><code id="gCodeText"></code></pre>

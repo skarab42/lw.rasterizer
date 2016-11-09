@@ -20,6 +20,10 @@ pre, code {
     font-family: monospace;
 }
 
+.fr {
+    float: right;
+}
+
 .control, .info {
     color: #00bc8c;
     font-size: 0.8em;
@@ -166,4 +170,30 @@ pre, code {
     background: #222;
     border-radius: 8px;
     border: 1px solid #464545;
+}
+
+#tooltip {
+    left: 355px;
+    display: none;
+    padding: 15px;
+    z-index: 1500;
+    font-size: 0.8em;
+    margin-right: 15px;
+    position: absolute;
+    border-radius: 4px;
+    line-height: 1.4em;
+    background-color: #111;
+    border: 1px #00bc8c solid;
+}
+
+#tooltip code {
+    padding: 2px 4px;
+    font-size: 1.2em;
+    border-radius: 4px;
+    display: inline-block;
+    background-color: #00bc8c;
+}
+
+.tooltip {
+    display: none;
 }
