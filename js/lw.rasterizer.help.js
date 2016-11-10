@@ -33,8 +33,8 @@ var lw = lw || {};
 
         ppi: [
             'PPI = Pixel Per Inch (or DPI = Dot Per Inch)',
-            'Your best belt for a better result is to take care of your beam size when you save your image, this is not mandatory but recommended.',
-            'Ex.: If your beam size is "0.1mm", you want your image match "1px = 0.1mm" for a maximal resolution.',
+            'Your best bet for a better result is to take care of your beam size when you save your image, this is not mandatory but recommended.',
+            'Ex.: If your beam size is "0.1mm", you want your image match "1px = 0.1mm" for a maximum resolution.',
             '<code>25.4 PPI = 1 PPM = Pixel Per Millimeter</code> <code>25.4 / 0.1mm = 254PPI.</code>',
             'For a beam diameter of "0.1mm" save your image at "254 PPI".',
             'For a beam diameter of "0.2mm" save your image at "127 PPI".'
@@ -77,7 +77,7 @@ var lw = lw || {};
         ],
 
         shadesOfGray: [
-            'Reduce the colors palet to X shades of gray.',
+            'Reduce the color pallete to X shades of gray.',
             'This can save some GCode bytes on dirty pictures.'
         ],
 
@@ -86,15 +86,15 @@ var lw = lw || {};
         ],
 
         contrast: [
-            'Image contrast adjustement from -255 to +255.'
+            'Image contrast adjustment from -255 to +255.'
         ],
 
         brightness: [
-            'Image brightness adjustement from -255 to +255.'
+            'Image brightness adjustment from -255 to +255.'
         ],
 
         gamma: [
-            'Image gamma adjustement from 0.01 to 2.'
+            'Image gamma adjustment from 0.01 to 2.'
         ],
 
         trimLine: [
@@ -104,7 +104,7 @@ var lw = lw || {};
 
         joinPixel: [
             'Draw a single line if several consecutive pixels of the same intensity are detected.',
-            'This can significantly reduce the number of instruction and the GCode file size.'
+            'This can significantly reduce the number of instructions and the GCode file size.'
         ],
 
         burnWhite: [
