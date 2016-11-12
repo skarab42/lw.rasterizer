@@ -33,7 +33,7 @@ var lw = lw || {};
 
         ppi: [
             'PPI = Pixel Per Inch (or DPI = Dot Per Inch)',
-            'Your best bet for a better result is to take care of your beam size when you save your image, this is not mandatory but recommended.',
+            'Your best bet for a better result is to set your beam size when you save your image, this is not mandatory, but recommended.',
             'Ex.: If your beam size is "0.1mm", you want your image match "1px = 0.1mm" for a maximum resolution.',
             '<code>25.4 PPI = 1 PPM = Pixel Per Millimeter</code> <code>25.4 / 0.1mm = 254PPI.</code>',
             'For a beam diameter of "0.1mm" save your image at "254 PPI".',
@@ -51,14 +51,14 @@ var lw = lw || {};
         ],
 
         beamPower: [
-            'The laser beam power limits from 0 to 100% of the beam range set above.',
+            'The laser beam power limits the power from 0 to 100% of the beam range set above.',
             'Ex.: if your beam range is set to <code>0 - 1</code> and the beam power is set to <code>20% - 80%</code>',
-            'the <code>S</code> value in the outputed GCode never go out of the range of <code>0.2 - 0.8</code>.',
+            'the <code>S</code> value in the generated GCode can never go out of the range of <code>0.2 - 0.8</code>.',
             'That means the color palet is mapped to this range <code>white = 0.2</code> - <code>black = 0.8</code>.'
         ],
 
         feedRate: [
-            'The constant speed for the entier job set in millimeters per minutes or seconds.'
+            'The constant speed for the entire job set in millimeters per minutes or seconds.'
         ],
 
         offsets: [
@@ -66,14 +66,14 @@ var lw = lw || {};
         ],
 
         overscan: [
-            'This feature add some extra white spaces before and after each line.',
+            'This feature add some extra white space before and after each line.',
             'This leaves time to reach the feed rate before starting to engrave',
-            'and can prevent over buring the edges of the raster.'
+            'and can prevent over burning the edges of the raster.'
         ],
 
         grayscale: [
             'Because the human eye does not perceive all the colors in the same way,',
-            'here are some classic algorithms that attempts to correct this offset.'
+            'here are some classic algorithms that attempt to correct this offset.'
         ],
 
         shadesOfGray: [
